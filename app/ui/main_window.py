@@ -4,8 +4,13 @@ from PIL import Image, ImageTk
 import imutils
 
 class MainWindow:
-    def __init__(self, controller):
-        self.controller = controller
+    def __init__(self, cameraController, fileController):
+        
+        self.recording = False
+
+        self.cameraController = cameraController
+        self.fileController = fileController
+
         self.root = tk.Tk()
         self.root.title("Interfaz Táctil - Cámara Térmica")
         self.root.geometry("380x180")
@@ -48,11 +53,11 @@ class MainWindow:
         self.captureFrame.grid(row=1, column=0, sticky="nsew")
 
         # Creando el botón de apagado
-        self.shutdownButton = tk.Button(self.shutdownFrame, text="OFF", command=self.controller.shutdown_system)
+        self.shutdownButton = tk.Button(self.shutdownFrame, text="OFF", command=self.cameraController.shutdown_system)
         self.shutdownButton.place(relx=0, rely=0, relwidth=0.5, relheight=0.5)  # Botón ocupa 50% del ancho y 50% del alto del shutdownFrame
 
         # Creando los botones de captura de frames
-        self.recordButton = tk.Button(self.captureFrame, text="Record")
+        self.recordButton = tk.Button(self.captureFrame, text="Record", command=self.fileController.save_video)
         self.shotButton = tk.Button(self.captureFrame, text="Shot")
 
         # Crear un marco contenedor para los botones en el captureFrame
@@ -80,21 +85,23 @@ class MainWindow:
             "GRAYS", 
             "JET",
             direction="above",
-            command=self.controller.change_colorMapVar
+            command=self.cameraController.change_colorMapVar
         ) 
         self.color_map_menu.config(width=4)  # Establecer un ancho fijo para el OptionMenu 
         self.color_map_menu.grid(row=2, column=0, sticky="ew") 
-        self.show_video() 
+        self.update_frame() 
 
     
-    def show_video(self):
-        ret,frame = self.controller.show_video()
+    def update_frame(self):
+        ret,frame = self.cameraController.show_video()
         if ret == True:
             frame = self.resize_image(frame)
             img = ImageTk.PhotoImage(image = frame) 
             self.video_label.configure(image=img)
             self.video_label.image = img
-            self.video_label.after(10,self.show_video)
+            if self.recording == True:
+                self.fileController.save_video()
+            self.video_label.after(10,self.update_frame)
         else:
             self.video_label.configure(text="Camera not found")
 
@@ -113,6 +120,6 @@ class MainWindow:
     
     def on_closing(self):
         #Liberar el recurso de la cámara
-        self.controller.release()
+        self.cameraController.release()
         self.root.destroy()
         

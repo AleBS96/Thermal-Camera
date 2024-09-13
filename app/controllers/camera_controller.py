@@ -1,6 +1,5 @@
 import cv2
 import os
-from app.models.camera_model import CameraModel
 import imutils
 from PIL import Image, ImageTk
 
@@ -15,8 +14,8 @@ class CameraController:
             }
     colorMapVar = "ORIGINAL"
     
-    def __init__(self):
-        self.cap = CameraModel()
+    def __init__(self, cameraModel):
+        self.cap = cameraModel
 
     def show_video(self):
         ret, frame = self.cap.get_frame()
