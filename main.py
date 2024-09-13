@@ -1,9 +1,9 @@
 from app.ui.main_window import MainWindow
-from app.controllers.main_controller import MainController
+from app.controllers.camera_controller import CameraController
 
 def main():
     # Crear una instancia del controlador principal
-    controller = MainController()
+    controller = CameraController()
     
     # Crear la ventana principal, pasando el controlador
     window = MainWindow(controller)

@@ -72,7 +72,7 @@ class MainWindow:
             self.optionsFrame, 
             self.color_map_var, 
             "ORIGINAL",
-            "ORIGINAL", 
+            "ORIGINAL",
             "HOT", 
             "COOL", 
             "PLASMA", 

@@ -4,7 +4,7 @@ from app.models.camera_model import CameraModel
 import imutils
 from PIL import Image, ImageTk
 
-class MainController:
+class CameraController:
     colorMapDict = {
         "GRAYS":cv2.COLOR_BGR2GRAY,
         "JET": cv2.COLORMAP_JET,
