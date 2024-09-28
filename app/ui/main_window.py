@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
-import imutils
 
 class MainWindow:
     def __init__(self, controller):
@@ -52,7 +51,8 @@ class MainWindow:
         self.shutdownButton.place(relx=0, rely=0, relwidth=0.5, relheight=0.5)  # Botón ocupa 50% del ancho y 50% del alto del shutdownFrame
 
         # Creando los botones de captura de frames
-        self.recordButton = tk.Button(self.captureFrame, text="Record")
+        self.recordButton = tk.Button(self.captureFrame, text="Record", command=self.controller.start_recording)
+        self.stoprecordButton = tk.Button(self.captureFrame, text="Stop", command=self.controller.stop_recording)
         self.shotButton = tk.Button(self.captureFrame, text="Shot")
 
         # Crear un marco contenedor para los botones en el captureFrame
@@ -60,11 +60,16 @@ class MainWindow:
         self.buttonFrame.pack(fill="both", expand=True)
 
         self.recordButton.pack(side="top", fill="both", expand=True)
+        self.stoprecordButton.pack(side="top", fill="both", expand=True)
         self.shotButton.pack(side="bottom", fill="both", expand=True)
 
         # Label para mostrar las imágenes de la cámara térmica
         self.video_label = tk.Label(self.cameraFrame, bg = "white")
         self.video_label.place(relx=0, rely=0, relwidth=1, relheight=1)  # Utilizar place para evitar que el Label cambie el tamaño del Frame
+
+        # Crear un Label para mostrar el tiempo de grabación, sobre el video
+        self.time_label = ttk.Label( self.video_label, text="00:00:00", font=('Arial', 12), background=None, foreground="red")
+        self.time_label.grid(row=0, column=0, sticky="ne", padx=10, pady=10)
 
         # Crear un menú desplegable para seleccionar el mapa de colores
         self.color_map_var = tk.StringVar(value="ORIGINAL")
@@ -84,17 +89,18 @@ class MainWindow:
         ) 
         self.color_map_menu.config(width=4)  # Establecer un ancho fijo para el OptionMenu 
         self.color_map_menu.grid(row=2, column=0, sticky="ew") 
-        self.show_video() 
+        self.update_frame() 
 
     
-    def show_video(self):
-        ret,frame = self.controller.show_video()
+    def update_frame(self):
+        ret,frame = self.controller.update_frame()
         if ret == True:
-            frame = self.resize_image(frame)
-            img = ImageTk.PhotoImage(image = frame) 
+            img = Image.fromarray(frame)
+            img = self.resize_image(img)
+            img = ImageTk.PhotoImage(image = img)
+            self.video_label.image = img 
             self.video_label.configure(image=img)
-            self.video_label.image = img
-            self.video_label.after(10,self.show_video)
+            self.video_label.after(10,self.update_frame)
         else:
             self.video_label.configure(text="Camera not found")
 
