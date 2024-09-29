@@ -4,7 +4,7 @@ class CameraModel:
     def __init__(self,index) -> None:
         self.cap = cv2.VideoCapture(index)      
     
-    def get_frame(self, half = True):
+    def get_frame(self):
         if self.cap is not None:
             ret, frame = self.cap.read()
             if ret != True:               
