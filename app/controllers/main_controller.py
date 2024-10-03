@@ -9,17 +9,19 @@ from app.models.videosaver_model import VideoSaver
 from app.models.frameprocessor import FrameProcessor
 
 class MainController:
-    recording = False
     
     def __init__(self):
         self.cap = CameraModel(0)
         self.frameProcessor = FrameProcessor()
+        self.recording = False
+        self.frame = None
 
     def update_frame(self):
-        ret, frame = self.cap.get_frame()
+        ret, self.frame = self.cap.get_frame()
         formatted_time = None 
         if ret == True:
-            color_mapped_frame = self.frameProcessor.setColorMap(frame)
+            #Formatea el frame segun los par'ametros seleccionados por el usuario
+            color_mapped_frame = self.frameProcessor.setColorMap(self.frame)
             color_mapped_splitted_frame = self.frameProcessor.setFrameSection(color_mapped_frame, "FULL")   
 
             if self.recording:
@@ -28,7 +30,8 @@ class MainController:
                 #Calcula el tiempo transcurrido
                 formatted_time = self.elapsed_time()
 
-        return ret, color_mapped_splitted_frame, formatted_time, self.recording
+        color_mapped_splitted_frame_RGB = cv2.cvtColor(color_mapped_splitted_frame, cv2.COLOR_BGR2RGB)
+        return ret,  color_mapped_splitted_frame_RGB, formatted_time, self.recording
     
     def elapsed_time (self):
         # Calcular el tiempo transcurrido y formatearlo como hh:mm:ss
@@ -72,8 +75,6 @@ class MainController:
             messagebox.showwarning("Advertencia", "No se ha guardado el video.")
 
     def capture_img (self):
-        ret, frame = self.cap.get_frame()
-        if ret:
             save_dir = Path(os.getcwd()) / "captures/images"  # Carpeta 'capturas' en el directorio actual
             
             # Crear el directorio si no existe
@@ -90,9 +91,12 @@ class MainController:
             # Convertir la ruta a string en formato UTF-8 para OpenCV
             save_path_str = str(save_path)
             print(save_path_str)
-            cv2.imwrite(save_path_str, frame) 
-        else:
-            messagebox.showwarning("Advertencia", "No se ha guardado el video.")
+            
+            #Formatea el frame segun los par'ametros seleccionados por el usuario
+            color_mapped_frame = self.frameProcessor.setColorMap(self.frame)
+            color_mapped_splitted_frame = self.frameProcessor.setFrameSection(color_mapped_frame, "FULL")
+
+            cv2.imwrite(save_path_str, color_mapped_splitted_frame) 
 
     def release(self):
         self.cap.release()

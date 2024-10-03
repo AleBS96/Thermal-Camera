@@ -31,10 +31,8 @@ class FrameProcessor:
         else:
             color_map = self.colorMapDict.get(self.colorMapVar)
             color_mapped_frame = cv2.applyColorMap(frame, color_map)
-    
-        color_mapped_frame_RGB = cv2.cvtColor(color_mapped_frame, cv2.COLOR_BGR2RGB)
-        
-        return color_mapped_frame_RGB 
+          
+        return color_mapped_frame
     
     def setFrameSection (self, frame, frameSectionVar):
         if frameSectionVar == "BUTTOM":
