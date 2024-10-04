@@ -50,7 +50,7 @@ class MainWindow:
         self.captureFrame.grid(row=1, column=0, sticky="nsew")
 
         # Creando el botón de apagado
-        self.shutdownButton = tk.Button(self.shutdownFrame, text="OFF", command=self.cameraController.shutdown_system)
+        self.shutdownButton = tk.Button(self.shutdownFrame, text="OFF", command=self.controller.shutdown_system)
         self.shutdownButton.place(relx=0, rely=0, relwidth=0.5, relheight=0.5)  # Botón ocupa 50% del ancho y 50% del alto del shutdownFrame
 
         # Creando los botones de captura de frames
@@ -88,7 +88,7 @@ class MainWindow:
             "GRAYS", 
             "JET",
             direction="above",
-            command=self.cameraController.change_colorMapVar
+            command=self.controller.change_colorMapVar
         ) 
         self.color_map_menu.config(width=4)  # Establecer un ancho fijo para el OptionMenu 
         self.color_map_menu.grid(row=2, column=0, sticky="ew") 
@@ -131,6 +131,6 @@ class MainWindow:
 
     def on_closing(self):
         #Liberar el recurso de la cámara
-        self.cameraController.release()
+        self.controller.release()
         self.root.destroy()
         
