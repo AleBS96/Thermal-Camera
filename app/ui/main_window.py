@@ -1,15 +1,12 @@
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
-import imutils
 
 class MainWindow:
-    def __init__(self, cameraController, fileController):
-        
-        self.recording = False
-
-        self.cameraController = cameraController
-        self.fileController = fileController
+    def __init__(self, controller):
+        self.controller = controller
+        # Variable para manejar el estado de visibilidad de la etiqueta tiempo
+        self.time_visivle= False
 
         self.root = tk.Tk()
         self.root.title("Interfaz Táctil - Cámara Térmica")
@@ -57,20 +54,26 @@ class MainWindow:
         self.shutdownButton.place(relx=0, rely=0, relwidth=0.5, relheight=0.5)  # Botón ocupa 50% del ancho y 50% del alto del shutdownFrame
 
         # Creando los botones de captura de frames
-        self.recordButton = tk.Button(self.captureFrame, text="Record", command=self.fileController.save_video)
-        self.shotButton = tk.Button(self.captureFrame, text="Shot")
+
+        self.recordButton = tk.Button(self.captureFrame, text="Record", command=self.controller.start_recording)
+        self.stoprecordButton = tk.Button(self.captureFrame, text="Stop", command=self.controller.stop_recording)
+        self.shotButton = tk.Button(self.captureFrame, text="Shot", command=self.capture_image)
 
         # Crear un marco contenedor para los botones en el captureFrame
         self.buttonFrame = tk.Frame(self.captureFrame)
         self.buttonFrame.pack(fill="both", expand=True)
 
         self.recordButton.pack(side="top", fill="both", expand=True)
+        self.stoprecordButton.pack(side="top", fill="both", expand=True)
         self.shotButton.pack(side="bottom", fill="both", expand=True)
 
-        # Label para mostrar las imágenes de la cámara térmica
-        self.video_label = tk.Label(self.cameraFrame, bg = "white")
-        self.video_label.place(relx=0, rely=0, relwidth=1, relheight=1)  # Utilizar place para evitar que el Label cambie el tamaño del Frame
+        # Crear un canvas para mostrar el video y el tiempo encima
+        self.canvas = tk.Canvas(self.cameraFrame)
+        self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)  # Utilizar place para evitar que el Label cambie el tamaño del Frame
 
+        # Crear un texto para mostrar el tiempo y notificacion de capturade imagen
+        self.time_text = self.canvas.create_text(30, 10, anchor=tk.NW, text='', fill="black", font=("Helvetica", 12))
+        
         # Crear un menú desplegable para seleccionar el mapa de colores
         self.color_map_var = tk.StringVar(value="ORIGINAL")
         self.color_map_menu = ttk.OptionMenu(
@@ -91,33 +94,41 @@ class MainWindow:
         self.color_map_menu.grid(row=2, column=0, sticky="ew") 
         self.update_frame() 
 
-    
     def update_frame(self):
-        ret,frame = self.cameraController.show_video()
-        if ret == True:
-            frame = self.resize_image(frame)
-            img = ImageTk.PhotoImage(image = frame) 
-            self.video_label.configure(image=img)
-            self.video_label.image = img
-            if self.recording == True:
-                self.fileController.save_video()
-            self.video_label.after(10,self.update_frame)
-        else:
-            self.video_label.configure(text="Camera not found")
+        ret,frame,elapsedtime,self.time_visible = self.controller.update_frame()
 
-    
+        if ret == True:
+            img = Image.fromarray(frame)
+            img = self.resize_image(img)
+            img = ImageTk.PhotoImage(image = img)       
+             # Dibujar el video en el canvas
+            self.canvas.create_image(0, 0, anchor=tk.NW, image=img)
+            self.canvas.img = img 
+
+            if self.time_visible == True:
+                # Actualizar el tiempo en el canvas
+                self.canvas.itemconfigure(self.time_text, text=elapsedtime)
+                self.canvas.tag_raise(self.time_text)
+
+            self.canvas.after(10,self.update_frame)
+        else:
+            self.canvas.configure(text="Camera not found")
+ 
     def resize_image(self, img):
          # Redimensionar la imagen al tamaño del Label
-        label_width = self.video_label.winfo_width()
-        label_height = self.video_label.winfo_height()
+        label_width = self.canvas.winfo_width()
+        label_height = self.canvas.winfo_height()
         if label_width > 0 and label_height > 0:  # Evitar redimensionar a 0x0
             img = img.resize((label_width, label_height), Image.ANTIALIAS)
         return img
     
+    def capture_image(self):
+        self.controller.capture_img()
+        ##IMPLEMENTAR NOTIFICACION AL USUARIO DE CAPRUTA DE PANTALLA##
+
     def run(self):
         self.root.mainloop()
 
-    
     def on_closing(self):
         #Liberar el recurso de la cámara
         self.cameraController.release()

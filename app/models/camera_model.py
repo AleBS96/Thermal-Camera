@@ -1,19 +1,15 @@
 import cv2
 
 class CameraModel:
-    def __init__(self) -> None:
-        self.cap = cv2.VideoCapture(0)      
+    def __init__(self,index) -> None:
+        self.cap = cv2.VideoCapture(index)      
     
-    def get_frame(self, half = True):
+    def get_frame(self):
         if self.cap is not None:
             ret, frame = self.cap.read()
-            if ret == True:
-                if half == True:
-                    # Get the bottom half of the image
-                    height, width = frame.shape[:2]
-                    frame = frame[height // 2:, :]  #separates the bottom half of the image
-            else:
+            if ret != True:               
                 self.cap.release() 
+
             return ret, frame
     
     #Release camera resources
