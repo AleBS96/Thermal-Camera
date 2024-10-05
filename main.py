@@ -1,13 +1,10 @@
 from app.ui.main_window import MainWindow
 from app.controllers.main_controller import MainController
-from app.controllers.file_controller import FileController
-from app.models.file_model import FileModel
 
 
 def main():
     # Instanciar los controladoresCameraController
     cameraController = MainController()
-    fileController = FileController(FileModel())
     
     # Crear la ventana principal, pasando los controladores
     window = MainWindow(cameraController)

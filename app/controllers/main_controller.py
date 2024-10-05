@@ -82,10 +82,6 @@ class MainController:
     def capture_img (self):
             save_dir = Path(os.getcwd()) / "captures/images"  # Carpeta 'capturas' en el directorio actual         
            
-            # Crear el directorio si no existe
-            if not save_dir.exists():
-                save_dir.mkdir(parents=True, exist_ok=True)
-
             # Crear un nombre de archivo único usando la fecha y hora actual
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             file_name = f"captura_{timestamp}.jpg"

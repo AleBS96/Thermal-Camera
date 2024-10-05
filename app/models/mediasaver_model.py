@@ -51,25 +51,19 @@ class ImageSaver:
 
 
     def save_image(self):
-        #Si se recibe un frame valido se procese a guardarlo en la ruta especificada
-        if self.frame != None:
-            #Se conforma la ruta en que se va a guardar la imagen agregandole el nombre del archivo
-            save_path = self.save_dir / self.image_name
-            #Si no existe una ruta se crea
-            if not (save_path.exists()):
-                save_path.mkdir(parents=True, exist_ok=True)
+        #Se conforma la ruta en que se va a guardar la imagen agregandole el nombre del archivo
+        save_path = self.save_dir / self.image_name
+        
+        #Si no existe una ruta se crea
+        if not (self.save_dir.exists()):
+            self.save_dir.mkdir(parents=True, exist_ok=True)
             
-            # Convertir la ruta a string en formato UTF-8 para OpenCV
-            save_path_str = str(save_path)
-            print(save_path_str)
+        # Convertir la ruta a string en formato UTF-8 para OpenCV
+        save_path_str = str(save_path)
+        print(save_path_str)
           
-            cv2.imwrite(save_path_str, self.frame) 
-            return True
-       
-        else:
-            return False
-
-
+        cv2.imwrite(save_path_str , self.frame) 
+                    
 '''if __name__ == "__main__":
     cap = cv2.VideoCapture(0)
     
