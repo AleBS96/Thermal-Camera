@@ -1,8 +1,9 @@
 import cv2
 import os
+from pathlib import Path
 
 class VideoSaver:
-    def __init__(self, save_dir='videos', video_name='output', frame_width=256, frame_height=192, fps=30):
+    def __init__(self, save_dir='videos', video_name='video_00', frame_width=256, frame_height=192, fps=30):
         # Directorio donde se guardará el video
         self.save_dir = save_dir
         self.video_name = video_name
@@ -38,6 +39,36 @@ class VideoSaver:
         if self.video_writer is not None:
             self.video_writer.release()
             self.video_writer = None
+
+
+class ImageSaver:
+    
+    def __init__(self, frame = None, save_dir = "images", image_name = "image_00") -> None:
+        # Directorio donde se guardará el video
+        self.frame = frame
+        self.save_dir = save_dir
+        self.image_name = image_name
+
+
+    def save_image(self):
+        #Si se recibe un frame valido se procese a guardarlo en la ruta especificada
+        if self.frame != None:
+            #Se conforma la ruta en que se va a guardar la imagen agregandole el nombre del archivo
+            save_path = self.save_dir / self.image_name
+            #Si no existe una ruta se crea
+            if not (save_path.exists()):
+                save_path.mkdir(parents=True, exist_ok=True)
+            
+            # Convertir la ruta a string en formato UTF-8 para OpenCV
+            save_path_str = str(save_path)
+            print(save_path_str)
+          
+            cv2.imwrite(save_path_str, self.frame) 
+            return True
+       
+        else:
+            return False
+
 
 '''if __name__ == "__main__":
     cap = cv2.VideoCapture(0)

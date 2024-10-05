@@ -5,7 +5,8 @@ from pathlib import Path
 from tkinter import simpledialog, messagebox
 import time
 from app.models.camera_model import CameraModel
-from app.models.videosaver_model import VideoSaver
+from app.models.mediasaver_model import VideoSaver
+from app.models.mediasaver_model import ImageSaver
 from app.models.frameprocessor import FrameProcessor
 
 class MainController:
@@ -31,6 +32,7 @@ class MainController:
                 formatted_time = self.elapsed_time()
 
         color_mapped_splitted_frame_RGB = cv2.cvtColor(color_mapped_splitted_frame, cv2.COLOR_BGR2RGB)
+        
         return ret,  color_mapped_splitted_frame_RGB, formatted_time, self.recording
     
     def elapsed_time (self):
@@ -70,33 +72,31 @@ class MainController:
 
             # Renombrar el archivo temporal
             os.rename('./captures/videos/temp.avi', save_path)
+   
+            ###cambiar la ventana emergente por notificacione en la app
             messagebox.showinfo("Éxito", f"El video ha sido guardado como: {save_path}")
         else:
+            ###cambiar la ventana emergente por notificacione en la app
             messagebox.showwarning("Advertencia", "No se ha guardado el video.")
 
     def capture_img (self):
-            save_dir = Path(os.getcwd()) / "captures/images"  # Carpeta 'capturas' en el directorio actual
-            
+            save_dir = Path(os.getcwd()) / "captures/images"  # Carpeta 'capturas' en el directorio actual         
+           
             # Crear el directorio si no existe
             if not save_dir.exists():
                 save_dir.mkdir(parents=True, exist_ok=True)
-            
+
             # Crear un nombre de archivo único usando la fecha y hora actual
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             file_name = f"captura_{timestamp}.jpg"
-            
-            # Ruta completa del archivo (con pathlib que maneja correctamente caracteres especiales)
-            save_path = save_dir / file_name
-
-            # Convertir la ruta a string en formato UTF-8 para OpenCV
-            save_path_str = str(save_path)
-            print(save_path_str)
-            
+           
             #Formatea el frame segun los par'ametros seleccionados por el usuario
             color_mapped_frame = self.frameProcessor.setColorMap(self.frame)
             color_mapped_splitted_frame = self.frameProcessor.setFrameSection(color_mapped_frame, "FULL")
+            
+            imageserver = ImageSaver(color_mapped_splitted_frame, save_dir, file_name)
+            imageserver.save_image()
 
-            cv2.imwrite(save_path_str, color_mapped_splitted_frame) 
 
     def release(self):
         self.cap.release()
