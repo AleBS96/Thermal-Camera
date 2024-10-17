@@ -23,7 +23,7 @@ class MainController:
         if ret == True:
             #Formatea el frame segun los par'ametros seleccionados por el usuario
             color_mapped_frame = self.frameProcessor.setColorMap(self.frame)
-            color_mapped_splitted_frame = self.frameProcessor.setFrameSection(color_mapped_frame, "FULL")   
+            color_mapped_splitted_frame = self.frameProcessor.setFrameSection(color_mapped_frame, "TOP")   
 
             if self.recording:
                 #Guarda el frame actual
@@ -59,10 +59,11 @@ class MainController:
 
     def stop_recording (self):
         self.recording = False
-
+        self.show_keyboard()
         file_name = simpledialog.askstring("Nombre del archivo", "Introduce el nombre del video:")
         
         if file_name:
+            self.hide_keyboard()
             # Asegurarse de que el nombre no tenga extensión
             file_name = os.path.splitext(file_name)[0]  
             save_path = os.path.join(self.video_saver.save_dir, f"{file_name}.avi")
@@ -88,7 +89,7 @@ class MainController:
            
             #Formatea el frame segun los par'ametros seleccionados por el usuario
             color_mapped_frame = self.frameProcessor.setColorMap(self.frame)
-            color_mapped_splitted_frame = self.frameProcessor.setFrameSection(color_mapped_frame, "FULL")
+            color_mapped_splitted_frame = self.frameProcessor.setFrameSection(color_mapped_frame, "TOP")
             
             imageserver = ImageSaver(color_mapped_splitted_frame, save_dir, file_name)
             imageserver.save_image()
@@ -100,3 +101,10 @@ class MainController:
     def shutdown_system(self):
        os.system("sudo shutdown now")
  
+    def show_keyboard(self):
+        # Llamar al teclado embebido de la Raspberry Pi
+        os.system('matchbox-keyboard &')
+
+    def hide_keyboard(self):
+        # Cerrar el teclado embebido
+        os.system('pkill matchbox-keyboard')
