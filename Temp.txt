@@ -1,0 +1,19 @@
+[Unit]
+sudo nano /etc/systemd/system/mi_aplicacion.service
+
+Description=Iniciar mi aplicación en modo gráfico mínimo
+After=network.target
+
+[Service]
+ExecStart=/home/pi/start_app.sh
+User=pi
+Environment=DISPLAY=:0
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+sudo systemctl daemon-reload
+sudo systemctl enable mi_aplicacion.service
