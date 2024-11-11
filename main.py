@@ -4,10 +4,10 @@ from app.controllers.main_controller import MainController
 
 def main():
     # Instanciar los controladoresCameraController
-    cameraController = MainController()
+    Controller = MainController()
     
     # Crear la ventana principal, pasando los controladores
-    window = MainWindow(cameraController)
+    window = MainWindow(Controller)
     
     # Iniciar la interfaz gráfica
     window.run()
