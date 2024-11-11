@@ -11,7 +11,7 @@ class MainWindow:
         self.recording = False
         self.root = tk.Tk()
         self.root.title("Interfaz Táctil - Cámara Térmica")
-        self.root.geometry("380x180")
+        self.root.attributes("-fullscreen", True)
         # Vincular el evento de cierre de la ventana al método de cierre
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.createWidgets()
@@ -56,7 +56,7 @@ class MainWindow:
 
         # Crear marco Captura de Frames
         self.captureFrame = tk.Frame(self.optionsFrame)
-        self.shutdownFrame = tk.Frame(self.optionsFrame)
+        self.shutdownFrame = tk.Frame(self.optionsFrame, background="blue")
        # self.colormapFrame = tk.Frame(self.optionsFrame)
 
         # Configurar las filas del grid en el Frame opciones
@@ -67,12 +67,14 @@ class MainWindow:
 
         # Colocando los marcos en el grid
         self.shutdownFrame.grid(row=0, column=0, sticky="nsew")
+        self.shutdownFrame.place(relx=0, rely=0, relwidth=1, relheight=0.1)  # Botón ocupa 50% del ancho y 50% del alto del shutdownFrame
+ 
         self.captureFrame.grid(row=1, column=0, sticky="nsew")
       #  self.colormapFrame.grid(row=2, column=0, sticky="nsew")
 
         # Creando el botón de apagado
         self.shutdownButton = tk.Button(self.shutdownFrame, image=self.shutdownIcon, borderwidth=0, highlightthickness=0, command=self.controller.shutdown_system)
-        self.shutdownButton.place(relx=0.2, rely=0.1, relwidth=0.7, relheight=0.7)  # Botón ocupa 50% del ancho y 50% del alto del shutdownFrame
+        self.shutdownButton.place(relx=0, rely=0, relwidth=1, relheight=1)  # Botón ocupa 50% del ancho y 50% del alto del shutdownFrame
  
         # Creando los botones de captura de frames
         self.recordButton = tk.Button(self.captureFrame, image=self.recordButtonIcon , borderwidth=0, highlightthickness=0, command=self.toggle_recording)
@@ -94,6 +96,7 @@ class MainWindow:
         
         # Crear un Menubutton para el menú con imagen y sin texto
         self.menubutton = tk.Menubutton(self.optionsFrame, relief="raised", compound="left", anchor="w", padx=25, pady=20, borderwidth=0)
+
         # Crear un Menu desplegable
         self.menu = tk.Menu(self.menubutton, tearoff=0)
         self.menubutton.config(menu=self.menu, image=self.noicon)

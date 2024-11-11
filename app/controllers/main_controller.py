@@ -49,7 +49,7 @@ class MainController:
         frame_width = int(self.cap.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         frame_height = int(self.cap.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-        self.video_saver = VideoSaver(save_dir="./captures/videos", video_name="temp", frame_width=frame_width, frame_height=frame_height, fps=25)
+        self.video_saver = VideoSaver(save_dir="./captures/videos", video_name="temp", frame_width=frame_width, frame_height=frame_height, fps=30)
         self.video_saver.start_saving()
      
         # Variable para guardar el tiempo de inicio
