@@ -17,13 +17,16 @@ class MainWindow:
         self.createWidgets()
 
     def createWidgets(self):
-        self.colormapIcon_height = 25
-        self.colormapIcon_width = 25
+        self.colormapIcon_height = 60
+        self.colormapIcon_width = 60
         #CargarIconos
-        self.shutdownIcon = self.load_icon("app/assets/apagar.png",25,25)
-        self.recordButtonIcon = self.load_icon("app/assets/capture/iniciargrabacion.png",30,30)
-        self.stoprecordButtonIcon = self.load_icon("app/assets/capture/detenergrabacion.png",30,30)
-        self.shotButtonIcon = self.load_icon("app/assets/capture/capturaimagen.png",25,25)
+        self.shutdownIcon = self.load_icon("app/assets/apagar.png",self.colormapIcon_height,self.colormapIcon_width)
+
+
+        self.loadButtonIcon = self.load_icon("app/assets/file/load.png",self.colormapIcon_height,self.colormapIcon_width) 
+        self.recordButtonIcon = self.load_icon("app/assets/capture/iniciargrabacion.png", self.colormapIcon_height + 5,self.colormapIcon_width + 5)
+        self.stoprecordButtonIcon = self.load_icon("app/assets/capture/detenergrabacion.png", self.colormapIcon_height + 5,self.colormapIcon_width + 5)
+        self.shotButtonIcon = self.load_icon("app/assets/capture/capturaimagen.png", self.colormapIcon_height,self.colormapIcon_width)
 
         # Cargar imágenes de los mapas de colores
         self.noicon = self.load_icon("app/assets/color_map/nocolormap.png",self.colormapIcon_height,self.colormapIcon_width)  
@@ -39,13 +42,13 @@ class MainWindow:
         self.mainFrame.pack(fill="both", expand=True)
 
         # Configurar las columnas del grid en el Frame principal
-        self.mainFrame.grid_columnconfigure(0, weight=1)  # Columna izquierda
+        self.mainFrame.grid_columnconfigure(0, weight=4)  # Columna izquierda
         self.mainFrame.grid_columnconfigure(1, weight=30) # Columna central
         self.mainFrame.grid_columnconfigure(2, weight=15)  # Columna derecha
         self.mainFrame.grid_rowconfigure(0, weight=1)     # Fila única
  
         # Crear marcos de segundo nivel
-        self.optionsFrame = tk.Frame(self.mainFrame)  # Marco de opciones
+        self.optionsFrame = tk.Frame(self.mainFrame, width=30)  # Marco de opciones
         self.cameraFrame = tk.Frame(self.mainFrame)    # Marco para visualizar video la Cámara
         self.parametersFrame = tk.Frame(self.mainFrame)  # Crear marco de parámetros
 
@@ -56,51 +59,45 @@ class MainWindow:
 
         # Crear marco Captura de Frames
         self.captureFrame = tk.Frame(self.optionsFrame)
-        self.shutdownFrame = tk.Frame(self.optionsFrame, background="blue")
-       # self.colormapFrame = tk.Frame(self.optionsFrame)
+        self.shutdownFrame = tk.Frame(self.optionsFrame)
+        self.fileFrame = tk.Frame(self.optionsFrame)
+        self.colormapFrame = tk.Frame(self.optionsFrame)
 
         # Configurar las filas del grid en el Frame opciones
-        self.optionsFrame.grid_rowconfigure(0, weight=3)  # Fila Superior
+        self.optionsFrame.grid_rowconfigure(0, weight=6)  # Fila Superior
         self.optionsFrame.grid_rowconfigure(1, weight=2)  # Fila Media
-        self.optionsFrame.grid_rowconfigure(2, weight=1)  # Fila Inferior
+        self.optionsFrame.grid_rowconfigure(2, weight=3)  # Fila Inferior
+        self.optionsFrame.grid_rowconfigure(3, weight=3)  # Fila Inferior
         self.optionsFrame.grid_columnconfigure(0, weight=1)
 
         # Colocando los marcos en el grid
         self.shutdownFrame.grid(row=0, column=0, sticky="nsew")
         self.shutdownFrame.place(relx=0, rely=0, relwidth=1, relheight=0.1)  # Botón ocupa 50% del ancho y 50% del alto del shutdownFrame
- 
-        self.captureFrame.grid(row=1, column=0, sticky="nsew")
-      #  self.colormapFrame.grid(row=2, column=0, sticky="nsew")
+        self.fileFrame.grid(row=1, column=0, sticky="nsew")
+        self.captureFrame.grid(row=2, column=0, sticky="nsew")
+        self.colormapFrame.grid(row=3, column=0, sticky="nsew")
 
         # Creando el botón de apagado
         self.shutdownButton = tk.Button(self.shutdownFrame, image=self.shutdownIcon, borderwidth=0, highlightthickness=0, command=self.controller.shutdown_system)
-        self.shutdownButton.place(relx=0, rely=0, relwidth=1, relheight=1)  # Botón ocupa 50% del ancho y 50% del alto del shutdownFrame
- 
+        self.shutdownButton.place(relx=0, rely=0.1, relwidth=1, relheight=1)
+        
+        # Creando los botones para gestion de archivos
+        self.loadButton = tk.Button(self.fileFrame, image = self.loadButtonIcon, borderwidth=0, highlightthickness=0, command=self.load_image)
+        self.loadButton.place(relx=0, rely=0, relwidth=1, relheight=1)
+        
         # Creando los botones de captura de frames
         self.recordButton = tk.Button(self.captureFrame, image=self.recordButtonIcon , borderwidth=0, highlightthickness=0, command=self.toggle_recording)
         self.shotButton = tk.Button(self.captureFrame, image=self.shotButtonIcon, borderwidth=0, highlightthickness=0, command=self.capture_image)
+        self.recordButton.place(relx=0, rely=0, relwidth=1, relheight=0.5)
+        self.shotButton.place(relx=0, rely=0.5, relwidth=1, relheight=0.5)
 
-        # Crear un marco contenedor para los botones en el captureFrame
-        self.buttonFrame = tk.Frame(self.captureFrame)
-        self.buttonFrame.pack(fill="both", expand=True)
-
-        self.recordButton.pack(side="top", pady=2)
-        self.shotButton.pack(side="bottom",pady=3)
-
-        # Crear un canvas para mostrar el video y el tiempo encima
-        self.canvas = tk.Canvas(self.cameraFrame)
-        self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)  # Utilizar place para evitar que el Label cambie el tamaño del Frame
-
-        # Crear un texto para mostrar el tiempo y notificacion de capturade imagen
-        self.time_text = self.canvas.create_text(30, 10, anchor=tk.NW, text='', fill="black", font=("Helvetica", 12))
-        
         # Crear un Menubutton para el menú con imagen y sin texto
-        self.menubutton = tk.Menubutton(self.optionsFrame, relief="raised", compound="left", anchor="w", padx=25, pady=20, borderwidth=0)
+        self.menubutton = tk.Menubutton(self.colormapFrame, relief="raised", borderwidth=0)
+        self.menubutton.place(relx=0, rely=0.2, relwidth=1, relheight=1)
 
         # Crear un Menu desplegable
         self.menu = tk.Menu(self.menubutton, tearoff=0)
         self.menubutton.config(menu=self.menu, image=self.noicon)
-        self.menubutton.grid(row=2, column=0) 
         
         # Agregar las opciones al menú sin texto (solo imágenes)
         self.menu.add_command(image=self.noicon, command=lambda:self.change_colorMap("ORIGINAL", self.noicon))
@@ -110,6 +107,13 @@ class MainWindow:
         self.menu.add_command(image=self.turboicon, command=lambda:self.change_colorMap("TURBO", self.turboicon))
         self.menu.add_command(image=self.graysicon, command=lambda:self.change_colorMap( "GRAYS", self.graysicon))
         self.menu.add_command(image=self.jeticon, command=lambda:self.change_colorMap("JET", self.jeticon))
+
+        # Crear un canvas para mostrar el video y el tiempo encima
+        self.canvas = tk.Canvas(self.cameraFrame)
+        self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)  # Utilizar place para evitar que el Label cambie el tamaño del Frame
+
+        # Crear un texto para mostrar el tiempo y notificacion de capturade imagen
+        self.time_text = self.canvas.create_text(30, 10, anchor=tk.NW, text='', fill="black", font=("Helvetica", 12))
 
         self.update_frame() 
 
@@ -174,5 +178,8 @@ class MainWindow:
             # Cambiar la imagen en el Menubutton cuando se selecciona una opción
         self.menubutton.config(image=imagen)
         self.controller.change_colorMapVar(color_map)
+
+    def load_image(self):
+        pass
        
         
