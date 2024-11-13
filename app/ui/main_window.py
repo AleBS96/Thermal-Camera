@@ -79,7 +79,7 @@ class MainWindow:
 
         # Creando el botón de apagado
         self.shutdownButton = tk.Button(self.shutdownFrame, image=self.shutdownIcon, borderwidth=0, highlightthickness=0, command=self.controller.shutdown_system)
-        self.shutdownButton.place(relx=0, rely=0.1, relwidth=1, relheight=1)
+        self.shutdownButton.place(relx=0, rely=0, relwidth=1, relheight=1)
         
         # Creando los botones para gestion de archivos
         self.loadButton = tk.Button(self.fileFrame, image = self.loadButtonIcon, borderwidth=0, highlightthickness=0, command=self.load_image)
@@ -87,7 +87,7 @@ class MainWindow:
         
         # Creando los botones de captura de frames
         self.recordButton = tk.Button(self.captureFrame, image=self.recordButtonIcon , borderwidth=0, highlightthickness=0, command=self.toggle_recording)
-        self.shotButton = tk.Button(self.captureFrame, image=self.shotButtonIcon, borderwidth=0, highlightthickness=0, command=self.capture_image)
+        self.shotButton = tk.Button(self.captureFrame, image=self.shotButtonIcon, borderwidth=0, highlightthickness=0, command=self.capture_image, pady=10)
         self.recordButton.place(relx=0, rely=0, relwidth=1, relheight=0.5)
         self.shotButton.place(relx=0, rely=0.5, relwidth=1, relheight=0.5)
 
