@@ -99,7 +99,12 @@ class MainController:
         self.cap.release()
 
     def shutdown_system(self):
-       os.system("sudo shutdown now")
+       # Mostrar el diálogo de confirmación
+        response = messagebox.askokcancel("Confirmación", "¿Estás seguro que desea apagar el dispsitivo?")   
+        if response:  # Si se presiona "OK"
+            os.system("sudo shutdown now")
+       
+
  
     def show_keyboard(self):
         # Llamar al teclado embebido de la Raspberry Pi
