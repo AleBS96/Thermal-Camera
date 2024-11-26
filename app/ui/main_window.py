@@ -12,6 +12,7 @@ class MainWindow:
         self.root = tk.Tk()
         self.root.title("Interfaz Táctil - Cámara Térmica")
         self.root.attributes("-fullscreen", True)
+        self.counttime = 1000
         # Vincular el evento de cierre de la ventana al método de cierre
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.createWidgets()
@@ -112,7 +113,7 @@ class MainWindow:
         self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)  # Utilizar place para evitar que el Label cambie el tamaño del Frame
 
         # Crear un texto para mostrar el tiempo y notificacion de capturade imagen
-        self.time_text = self.canvas.create_text(30, 10, anchor=tk.NW, text='', fill="black", font=("Helvetica", 12))
+        self.notification = self.canvas.create_text(30, 10, anchor=tk.NW, text='', fill="black", font=("Helvetica", 24))
 
         self.update_frame() 
 
@@ -128,12 +129,16 @@ class MainWindow:
 
             if self.time_visible == True:
                 # Actualizar el tiempo en el canvas
-                self.canvas.itemconfigure(self.time_text, text=elapsedtime)
-                self.canvas.tag_raise(self.time_text)
+                self.canvas.itemconfigure(self.notification, text=elapsedtime)
+                self.canvas.tag_raise(self.notification)
+            
+            if self.counttime < 10:
+                self.set_notification("Imagen Capturada")
 
             self.canvas.after(10,self.update_frame)
         else:
-            self.canvas.configure(text="Camera not found")
+            self.canvas.configure(self.notification,text="Camera not found")
+            self.canvas.tag_raise(self.notification)
  
     def resize_image(self, img):
          # Redimensionar la imagen al tamaño del Label
@@ -156,9 +161,11 @@ class MainWindow:
             self.controller.stop_recording()
     
     def capture_image(self):
-        self.controller.capture_img()
         ##IMPLEMENTAR NOTIFICACION AL USUARIO DE CAPRUTA DE PANTALLA##
+        self.controller.capture_img()
+        self.counttime = 0
 
+        
     def run(self):
         self.root.mainloop()
 
@@ -180,5 +187,11 @@ class MainWindow:
 
     def load_image(self):
         pass
+
+    def set_notification(self, text):
+        self.counttime += 1
+        if (self.counttime < 200):
+            self.canvas.itemconfigure(self.notification, text=text)
+            self.canvas.tag_raise(self.notification)  
        
         

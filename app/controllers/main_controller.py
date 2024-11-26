@@ -23,7 +23,7 @@ class MainController:
         if ret == True:
             #Formatea el frame segun los par'ametros seleccionados por el usuario
             color_mapped_frame = self.frameProcessor.setColorMap(self.frame)
-            color_mapped_splitted_frame = self.frameProcessor.setFrameSection(color_mapped_frame, "TOP")   
+            color_mapped_splitted_frame = self.frameProcessor.setFrameSection(color_mapped_frame, "FULL")   
 
             if self.recording:
                 #Guarda el frame actual
@@ -89,7 +89,7 @@ class MainController:
            
             #Formatea el frame segun los par'ametros seleccionados por el usuario
             color_mapped_frame = self.frameProcessor.setColorMap(self.frame)
-            color_mapped_splitted_frame = self.frameProcessor.setFrameSection(color_mapped_frame, "TOP")
+            color_mapped_splitted_frame = self.frameProcessor.setFrameSection(color_mapped_frame, "FULL")
             
             imageserver = ImageSaver(color_mapped_splitted_frame, save_dir, file_name)
             imageserver.save_image()
