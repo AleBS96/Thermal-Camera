@@ -64,15 +64,14 @@ class MainWindow:
         self.colormapFrame = tk.Frame(self.optionsFrame)
 
         # Configurar las filas del grid en el Frame opciones
-        self.optionsFrame.grid_rowconfigure(0, weight=6)  # Fila Superior
+        self.optionsFrame.grid_rowconfigure(0, weight=2)  # Fila Superior
         self.optionsFrame.grid_rowconfigure(1, weight=2)  # Fila Media
         self.optionsFrame.grid_rowconfigure(2, weight=3)  # Fila Inferior
-        self.optionsFrame.grid_rowconfigure(3, weight=3)  # Fila Inferior
+        self.optionsFrame.grid_rowconfigure(3, weight=2)  # Fila Inferior
         self.optionsFrame.grid_columnconfigure(0, weight=1)
 
         # Colocando los marcos en el grid
         self.shutdownFrame.grid(row=0, column=0, sticky="nsew")
-        self.shutdownFrame.place(relx=0, rely=0, relwidth=1, relheight=0.1)  # Botón ocupa 50% del ancho y 50% del alto del shutdownFrame
         self.fileFrame.grid(row=1, column=0, sticky="nsew")
         self.captureFrame.grid(row=2, column=0, sticky="nsew")
         self.colormapFrame.grid(row=3, column=0, sticky="nsew")
@@ -93,7 +92,7 @@ class MainWindow:
 
         # Crear un Menubutton para el menú con imagen y sin texto
         self.menubutton = tk.Menubutton(self.colormapFrame, relief="raised", borderwidth=0)
-        self.menubutton.place(relx=0, rely=0.2, relwidth=1, relheight=1)
+        self.menubutton.place(relx=0, rely=0, relwidth=1, relheight=1)
 
         # Crear un Menu desplegable
         self.menu = tk.Menu(self.menubutton, tearoff=0)
