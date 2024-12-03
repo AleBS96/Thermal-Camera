@@ -1,6 +1,7 @@
 import cv2
 
 class CameraModel:
+
     def __init__(self,index) -> None:
         self.cap = cv2.VideoCapture(index)      
     
@@ -11,6 +12,9 @@ class CameraModel:
                 self.cap.release() 
 
             return ret, frame
+        
+    def fps (self):
+        return self.cap.get(cv2.CAP_PROP_FPS)
     
     #Release camera resources
     def release(self):

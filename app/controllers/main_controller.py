@@ -8,13 +8,16 @@ from app.models.camera_model import CameraModel
 from app.models.mediasaver_model import VideoSaver
 from app.models.mediasaver_model import ImageSaver
 from app.models.frameprocessor import FrameProcessor
+from app.models.lockin_model import LockIn
 
 class MainController:
     
     def __init__(self):
         self.cap = CameraModel(0)
         self.frameProcessor = FrameProcessor()
+        self.lockIn = LockIn(self.cap.fps(), 60.0, 1, 10000)
         self.recording = False
+        self.lockin_running = False
         self.frame = None
 
     def update_frame(self):
@@ -23,7 +26,7 @@ class MainController:
         if ret == True:
             #Formatea el frame segun los par'ametros seleccionados por el usuario
             color_mapped_frame = self.frameProcessor.setColorMap(self.frame)
-            color_mapped_splitted_frame = self.frameProcessor.setFrameSection(color_mapped_frame, "TOP")   
+            color_mapped_splitted_frame = self.frameProcessor.setFrameSection(color_mapped_frame, "FULL")   
 
             if self.recording:
                 #Guarda el frame actual
@@ -49,7 +52,7 @@ class MainController:
         frame_width = int(self.cap.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         frame_height = int(self.cap.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-        self.video_saver = VideoSaver(save_dir="./captures/videos", video_name="temp", frame_width=frame_width, frame_height=frame_height, fps=30)
+        self.video_saver = VideoSaver(save_dir="./captures/videos", video_name="temp", frame_width=frame_width, frame_height=frame_height, fps = self.cap.fps())
         self.video_saver.start_saving()
      
         # Variable para guardar el tiempo de inicio
@@ -59,11 +62,9 @@ class MainController:
 
     def stop_recording (self):
         self.recording = False
-        self.show_keyboard()
         file_name = simpledialog.askstring("Nombre del archivo", "Introduce el nombre del video:")
         
         if file_name:
-            self.hide_keyboard()
             # Asegurarse de que el nombre no tenga extensión
             file_name = os.path.splitext(file_name)[0]  
             save_path = os.path.join(self.video_saver.save_dir, f"{file_name}.avi")
@@ -89,11 +90,28 @@ class MainController:
            
             #Formatea el frame segun los par'ametros seleccionados por el usuario
             color_mapped_frame = self.frameProcessor.setColorMap(self.frame)
-            color_mapped_splitted_frame = self.frameProcessor.setFrameSection(color_mapped_frame, "TOP")
+            color_mapped_splitted_frame = self.frameProcessor.setFrameSection(color_mapped_frame, "FULL")
             
             imageserver = ImageSaver(color_mapped_splitted_frame, save_dir, file_name)
             imageserver.save_image()
 
+    def on_frEntry_change(self, fr):
+        self.lockIn.Fourier.FrameRate = fr
+        
+    def on_modEntry_change(self, mod):
+        self.lockIn.Fourier.Modulation = mod
+
+    def on_initEntry_change(self, init):
+        self.lockIn.Fourier.FrameRate = init
+
+    def on_finEntry_change(self, fin):
+        self.lockIn.Fourier.FinalFrame = fin
+
+    def start_lockin(self):
+        self.lockin_running = True
+    
+    def start_lockin(self):
+        self.lockin_running = False
 
     def release(self):
         self.cap.release()
@@ -103,13 +121,5 @@ class MainController:
         response = messagebox.askokcancel("Confirmación", "¿Estás seguro que desea apagar el dispsitivo?")   
         if response:  # Si se presiona "OK"
             os.system("sudo shutdown now")
-       
-
- 
-    def show_keyboard(self):
-        # Llamar al teclado embebido de la Raspberry Pi
-        os.system('matchbox-keyboard &')
-
-    def hide_keyboard(self):
-        # Cerrar el teclado embebido
-        os.system('pkill matchbox-keyboard')
+        
+    
