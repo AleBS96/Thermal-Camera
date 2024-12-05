@@ -1,9 +1,6 @@
 import app.Function.Basics as Basics
-import numpy as np, cmath, cv2
-from PySide6.QtGui import QPixmap, QImage
+import numpy as np, cmath
 from cv2.typing import MatLike
-from pathlib import Path
-import math
 
 class Fourier:
 

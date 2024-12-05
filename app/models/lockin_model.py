@@ -1,12 +1,12 @@
 from collections import deque
-import app.Function.Basics as Basics
+from app.Function.Methods import Fourier
 import numpy as np
 from cv2.typing import MatLike
 
 class LockIn ():
 
     __frame                     = deque()       #Queue of frames to process
-    __fourier                   = Basics.Fou()  #lock in method
+    __fourier                   = Fourier()  #lock in method
 
     def __init__(self, fps, modulation, initFrame, finFrame) -> None:
         self.Fourier.InitFrame = initFrame
@@ -19,7 +19,7 @@ class LockIn ():
         return self.__frame
     
     @property
-    def Fourier(self) -> Basics.Fou: 
+    def Fourier(self) -> Fourier: 
         return self.__fourier
 
     @Frame.getter
