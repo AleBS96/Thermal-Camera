@@ -36,7 +36,7 @@ class Fourier:
     WFactor     = lambda _, N : cmath.exp(-1j*2*cmath.pi/N)
     cp          = lambda _, F , N : int(F / N) + 1                                      # Current lock-in period value
     rangeFrame  = lambda _, f, i : f - i                                                # Number of total frames to be process
-    vop         = lambda _, frames, current:((current * 100) + 1) / frames              # Value  of  progress
+    vop         = lambda _, frames, current:((current * 100)) / frames              # Value  of  progress
    
 
     def register(self, listener):               # Mètodo que registra a los receptores de eventos de esta clase
@@ -224,6 +224,7 @@ class Fourier:
         self.kernel  = np.ones((3,3),np.uint8)
         self.__currentStatistic = {'Global':0 , 'X':0, 'Y':0}
 
+
     def __init__(self):
         self.isImageFull = False
         self.__init_frame = 0
@@ -236,35 +237,6 @@ class Fourier:
         self.kernel  = np.ones((3,3),np.uint8)
         self.__currentStatistic = {'Global':0 , 'X':0, 'Y':0}
 
-class FourPoints:
-    def register(self, listener):               # Mètodo que registra a los receptores de eventos de esta clase
-        self.__listener.append(listener)
-    
-    def unregister(self, listener):             # Mètodo que elimina el registro de los receptores de eventos
-        self.__listener.remove(listener)
-
-    def __init__(self):
-        pass
-
-class DigitalCorrelation:
-    def register(self, listener):               # Mètodo que registra a los receptores de eventos de esta clase
-        self.__listener.append(listener)
-    
-    def unregister(self, listener):             # Mètodo que elimina el registro de los receptores de eventos
-        self.__listener.remove(listener)
-
-    def __init__(self):
-        pass
-
-class Geometrical:
-    
-    __listener          = []                    # Se inicializa el controlador de receptores de eventos
-
-    def register(self, listener):               # Mètodo que registra a los receptores de eventos de esta clase
-        self.__listener.append(listener)
-    
-    def unregister(self, listener):             # Mètodo que elimina el registro de los receptores de eventos
-        self.__listener.remove(listener)
-
-    def __init__(self):
-        pass
+    def reset_fourier(self):
+        self.__currentFrame = 1
+        self.__porcentage = 0

@@ -10,6 +10,7 @@ class MainWindow:
         self.time_visivle= False
         self.recording = False
         self.lockinrunning = False
+        self.lockinporcentage = 0
         self.root = tk.Tk()
         self.root.title("Interfaz Táctil - Cámara Térmica")
         self.validate = self.root.register(self.validate_input)
@@ -30,6 +31,7 @@ class MainWindow:
         self.shotButtonIcon = self.load_icon("app/assets/capture/capturaimagen.png", self.colormapIcon_height,self.colormapIcon_width)
         self.execLockinButtonIcon = self.load_icon("app/assets/lockin/executelockin.png", self.colormapIcon_height - 30,self.colormapIcon_width - 30)
         self.stopLockinButtonIcon = self.load_icon("app/assets/lockin/stoplockin.png", self.colormapIcon_height - 30,self.colormapIcon_width - 30)
+        self.resetLockinButtonIcon = self.load_icon("app/assets/lockin/resetlockin.png", self.colormapIcon_height - 25,self.colormapIcon_width - 25)
         
 
         # Cargar imágenes de los mapas de colores
@@ -41,6 +43,7 @@ class MainWindow:
         self.graysicon = self.load_icon("app/assets/color_map/gray.png",self.colormapIcon_height,self.colormapIcon_width)  
         self.jeticon = self.load_icon("app/assets/color_map/jet.png",self.colormapIcon_height,self.colormapIcon_width)
        
+    
         # Crear marco principal
         self.mainFrame = tk.Frame(self.root, bg="white")
         self.mainFrame.pack(fill="both", expand=True)
@@ -136,11 +139,11 @@ class MainWindow:
         self.lockinFrame.grid_rowconfigure(1, weight=4)
 
         self.paramFrame = tk.Frame(self.lockinFrame)
-        self.executeFrame = tk.Frame(self.lockinFrame)
+        self.executionFrame = tk.Frame(self.lockinFrame)
 
          # Colocando los los subframes dentro del frame toolFrams
         self.paramFrame.grid(row=0, column=0, sticky="nsew")
-        self.executeFrame.grid(row=1, column=0, sticky="nsew")
+        self.executionFrame.grid(row=1, column=0, sticky="nsew")
 
         # Configurar las filas del grid en el Frame lockinFrames
         self.paramFrame.grid_columnconfigure(0, weight=1)
@@ -194,17 +197,47 @@ class MainWindow:
         self.finEntry = tk.Entry(self.finFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.finEntry_var, justify="right")
         self.finLabel.place(relx=0, rely=0, relwidth=1, relheight=0.5)
         self.finEntry.place(relx=0.1, rely=0.5, relwidth=0.8, relheight=0.5)
-        
-        #PushButton para iniciar procesamiento lockin
-        self.execLockinButton = tk.Button(self.executeFrame, image=self.execLockinButtonIcon, compound="left", padx=10, text="Ejecutar", command=self.toggle_lockinbutton)
+
+        # Configurar las filas del grid en el Frame lockinFrames
+        self.executionFrame.grid_columnconfigure(0, weight=1)
+        self.executionFrame.grid_columnconfigure(1, weight=1)
+        self.executionFrame.grid_rowconfigure(0, weight=1)
+
+        # Crear marcos de segundo nivel
+        self.executeFrame = tk.Frame(self.executionFrame)  
+        self.informationFrame = tk.Frame(self.executionFrame)
+
+        self.executeFrame.grid(row=0, column=0, sticky="nsew")
+        self.informationFrame.grid(row=0, column=1, sticky="nsew") 
+
+        # Configurar las filas del grid en el Frame information
+        self.informationFrame.grid_columnconfigure(0, weight=1)
+        self.informationFrame.grid_rowconfigure(0, weight=1)
+        self.informationFrame.grid_rowconfigure(1, weight=1)
+
+        #PushButton para iniciar o pausar procesamiento lockin
+        self.execLockinButton = tk.Button(self.executeFrame, image=self.execLockinButtonIcon, borderwidth=0, highlightthickness=0, command=self.toggle_lockinbutton)
         self.execLockinButton.place(relx=0.3, rely=0.15, relwidth=0.4, relheight=0.75)
+        #PushButton para para reiniciar el procesamiento lockin
+        self.resetLockinButton = tk.Button(self.executeFrame, image=self.resetLockinButtonIcon, borderwidth=0, highlightthickness=0, command=self.reset_lockin)
+
+        self.processedframesFrame = tk.Frame(self.informationFrame)  
+        self.porcentageFrame = tk.Frame(self.informationFrame) 
+
+        self.processedframesFrame.grid(row=0, column=0, sticky="nsew")
+        self.porcentageFrame.grid(row=1, column=0, sticky="nsew")
+
+        self.processedframesLabel = tk.Label(self.processedframesFrame, text="F.Actual: " + "0/"+ "{:.0f}".format(self.controller.lockIn.Fourier.FinalFrame)) 
+        self.processedframesLabel.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.porcentageLabel = tk.Label(self.porcentageFrame, text= "0%") 
+        self.porcentageLabel.place(relx=0, rely=0, relwidth=1, relheight=1)
 
         self.set_defautLockinparameters()
 
         self.update_frame() 
 
     def update_frame(self):
-        ret,frame,elapsedtime,self.time_visible = self.controller.update_frame()
+        ret,frame,elapsedtime,self.time_visible, self.lockinporcentage, lockinrunning = self.controller.update_frame()
         if ret == True:
             img = Image.fromarray(frame)
             img = self.resize_image(img)
@@ -212,7 +245,14 @@ class MainWindow:
              # Dibujar el video en el canvas
             self.canvas.create_image(0, 0, anchor=tk.NW, image=img)
             self.canvas.img = img 
-
+            
+            if self.lockinrunning:
+                self.update_lockininformation(self.lockinporcentage, self.controller.lockIn.Fourier.CurrentFrame, self.controller.lockIn.Fourier.FinalFrame)
+                if self.lockinporcentage >= 100:
+                    self.lockinrunning = False
+                    self.update_lockinsection()
+           
+                
             if self.time_visible == True:
                 # Actualizar el tiempo en el canvas
                 self.canvas.itemconfigure(self.notification, text=elapsedtime)
@@ -225,7 +265,7 @@ class MainWindow:
         else:
             self.canvas.configure(self.notification,text="Camera not found")
             self.canvas.tag_raise(self.notification)
- 
+        
     def resize_image(self, img):
          # Redimensionar la imagen al tamaño del Label
         label_width = self.canvas.winfo_width()
@@ -256,13 +296,36 @@ class MainWindow:
         if not self.lockinrunning:
             # Inicia del procesamiento lock in
             self.lockinrunning = True
-            self.execLockinButton.config(image=self.stopLockinButtonIcon, text="Detener")
+        else:
+            # Detiene el procesamiento lockin
+            self.lockinrunning = False  
+
+        self.update_lockinsection()  
+    
+    def update_lockinsection(self):
+        if self.lockinrunning:
+            self.execLockinButton.config(image=self.stopLockinButtonIcon)
+            self.execLockinButton.place(relx=0.4, rely=0.15, relwidth=0.3, relheight=0.75)
+            self.resetLockinButton.place_forget()
             self.controller.start_lockin()
         else:
-            # Detiene la grabación y solicita el nombre del archivo
-            self.lockinrunning = False
-            self.execLockinButton.config(image=self.execLockinButtonIcon, text="Ejecutar")
+            self.execLockinButton.config(image=self.execLockinButtonIcon)
+            self.execLockinButton.place(relx=0.3, rely=0.15, relwidth=0.3, relheight=0.75)
+            self.resetLockinButton.place(relx=0.6, rely=0.15, relwidth=0.3, relheight=0.75)
             self.controller.stop_lockin()    
+
+    def reset_lockin(self):
+        self.execLockinButton.place(relx=0.4, rely=0.15, relwidth=0.3, relheight=0.75)
+        self.resetLockinButton.place_forget()
+        self.controller.reset_Lockin()
+        self.reset_lockininformation()
+
+    def reset_lockininformation(self):      
+        self.update_lockininformation(0, 0, self.controller.lockIn.Fourier.FinalFrame)
+
+    def update_lockininformation(self, porcentage, PorcessedFrame, FinalFrame):
+        self.porcentageLabel.config(text="{:.0f}".format(porcentage)+"%")
+        self.processedframesLabel.config(text="F.Actual: " + str(PorcessedFrame)+"/"+ "{:.0f}".format(FinalFrame))     
 
     def run(self):
         self.root.mainloop()
@@ -293,13 +356,13 @@ class MainWindow:
             self.canvas.tag_raise(self.notification)
 
     def validate_input(self,text):
-        return (text.isdigit() or text == "") and (len(text) <= 7)  # Permite solo dígitos o vacío. 
+        return text.isdigit() and (len(text) <= 7) and int(text) > 0  # Permite solo dígitos o vacío. 
 
     #Sets the default parameters for Lockin processing
     def set_defautLockinparameters(self):
         self.frEntry_var.set(self.controller.lockIn.Fourier.FrameRate)
         self.modEntry_var.set(self.controller.lockIn.Fourier.Modulation)
-        self.initEntry_var.set(self.controller.lockIn.Fourier.InitFrame)
+        self.initEntry_var.set(self.controller.lockIn.Fourier.InitFrame + 1)
         self.finEntry_var.set(self.controller.lockIn.Fourier.FinalFrame)   
     
     def on_frEntry_change(self, name, index, mode):
@@ -309,10 +372,12 @@ class MainWindow:
         self.controller.on_modEntry_change(float(self.modEntry_var.get()))
 
     def on_initEntry_change(self, name, index, mode):
-        self.controller.on_initEntry_change(float(self.initEntry_var.get()))
+        self.controller.on_initEntry_change(float(self.initEntry_var.get())-1)
 
     def on_finEntry_change(self, name, index, mode):
         self.controller.on_finEntry_change(float(self.finEntry_var.get()))
+        self.update_lockininformation(self.lockinporcentage, self.controller.lockIn.Fourier.CurrentFrame, self.controller.lockIn.Fourier.FinalFrame)
+
 
        
         

@@ -15,8 +15,9 @@ class MainController:
     def __init__(self):
         self.cap = CameraModel(0)
         self.frameProcessor = FrameProcessor()
-        self.lockIn = LockIn(self.cap.fps(), 60.0, 1, 10000)
+        self.lockIn = LockIn(self.cap.fps(), 60.0, 0, 10000)
         self.recording = False
+        self.lockInPorcentage = 0
         self.lockin_running = False
         self.frame = None
 
@@ -24,6 +25,17 @@ class MainController:
         ret, self.frame = self.cap.get_frame()
         formatted_time = None 
         if ret == True:
+            
+            if self.lockin_running:
+                #Se realiza el procesamiento locin del frame actual
+                self.lockInPorcentage = self.lockIn.Run_Fourier(self.frame)
+                
+                if self.lockInPorcentage >= 100:
+                    self.lockin_running = False
+                    #Save the amplitude and phase thermograms as two .png images
+                    cv2.imwrite("./Amplitude1.png", self.lockIn.Fourier.Thermogram_Amplitude)
+                    cv2.imwrite("./Phase1.png", self.lockIn.Fourier.Thermogram_Phase)
+
             #Formatea el frame segun los par'ametros seleccionados por el usuario
             color_mapped_frame = self.frameProcessor.setColorMap(self.frame)
             color_mapped_splitted_frame = self.frameProcessor.setFrameSection(color_mapped_frame, "FULL")   
@@ -33,10 +45,10 @@ class MainController:
                 self.video_saver.save_frame(color_mapped_splitted_frame)
                 #Calcula el tiempo transcurrido
                 formatted_time = self.elapsed_time()
-
+                
         color_mapped_splitted_frame_RGB = cv2.cvtColor(color_mapped_splitted_frame, cv2.COLOR_BGR2RGB)
         
-        return ret,  color_mapped_splitted_frame_RGB, formatted_time, self.recording
+        return ret, color_mapped_splitted_frame_RGB, formatted_time, self.recording, self.lockInPorcentage,  self.lockin_running,
     
     def elapsed_time (self):
         # Calcular el tiempo transcurrido y formatearlo como hh:mm:ss
@@ -102,7 +114,7 @@ class MainController:
         self.lockIn.Fourier.Modulation = mod
 
     def on_initEntry_change(self, init):
-        self.lockIn.Fourier.FrameRate = init
+        self.lockIn.Fourier.InitFrame = init
 
     def on_finEntry_change(self, fin):
         self.lockIn.Fourier.FinalFrame = fin
@@ -110,8 +122,11 @@ class MainController:
     def start_lockin(self):
         self.lockin_running = True
     
-    def start_lockin(self):
+    def stop_lockin(self):
         self.lockin_running = False
+
+    def reset_Lockin(self):
+        self.lockIn.reset_lockin()
 
     def release(self):
         self.cap.release()

@@ -24,31 +24,26 @@ class LockIn ():
 
     @Frame.getter
     def Frame(self) -> deque:
-        self.__frame.append(self.read()) 
-        return self.__frame.popleft()
-
-    #  Execute the Fourier Method
-    def Run_Fourier(self):
-        #Starts the Lock-in
-        while self.__fourier.Porcentage < 100:
-            ret, img = self.Frame
-            if ret:
-                self.__fourier.Thermogram = img
-            else:
-                break
-
-
-
-#Para Testeo
-if __name__ == "__main__":
-  
-    camera = LockIn()
-    camera.Fourier.InitFrame = 3000
-    camera.Fourier.FinalFrame = 10000
-    camera.Fourier.Modulation = 60
-    #camera.Fourier.FrameRate = camera.get(cv2.CAP_PROP_FPS)
+        if len(self.__frame) != 0:
+            ret = True
+        else:
+            ret = False
+        return ret, self.__frame.popleft()
     
-    camera.Run_Fourier()
+    @Frame.setter
+    def Frame(self, frame):
+        self.__frame.append(frame) 
+    
+    #  Execute the Fourier Method
+    def Run_Fourier(self, img):
+        self.Frame = img
+        #Starts the Lock-in
+        ret, frame = self.Frame
+        if ret:
+            self.__fourier.Thermogram = frame
 
-  # Libera los recursos y cierra las ventanas
-    camera.release()
+        return  self.__fourier.Porcentage
+    
+    def reset_lockin(self):
+        self.Fourier.reset_fourier()
+
