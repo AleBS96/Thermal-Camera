@@ -49,7 +49,7 @@ class MainWindow:
         self.mainFrame.pack(fill="both", expand=True)
 
         # Configurar las columnas del grid en el Frame principal
-        self.mainFrame.grid_columnconfigure(0, weight=2)  # Columna izquierda
+        self.mainFrame.grid_columnconfigure(0, weight=4)  # Columna izquierda
         self.mainFrame.grid_columnconfigure(1, weight=30) # Columna central
         self.mainFrame.grid_columnconfigure(2, weight=8)  # Columna derecha
         self.mainFrame.grid_rowconfigure(0, weight=1)     # Fila única
@@ -122,7 +122,7 @@ class MainWindow:
         self.notification = self.canvas.create_text(30, 10, anchor=tk.NW, text='', fill="black", font=("Helvetica", 24))
 
         # Configurar las filas del grid en el Frame toolFrames
-        self.toolsFrame.grid_rowconfigure(0, weight=1)  # Fila Superior
+        self.toolsFrame.grid_rowconfigure(0, weight=2)  # Fila Superior
         self.toolsFrame.grid_rowconfigure(1, weight=3)  # Fila inferior
         self.toolsFrame.grid_columnconfigure(0, weight=1)
 
@@ -166,7 +166,7 @@ class MainWindow:
         self.frEntry_var = tk.StringVar()
         # Asociar la variable con el Entry y añadir el trace
         self.frEntry_var.trace_add("write", self.on_frEntry_change)
-        self.frLabel = tk.Label(self.frFrame, text="Tasa de frames")
+        self.frLabel = tk.Label(self.frFrame, text="FPS")
         self.frEntry = tk.Entry(self.frFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.frEntry_var, justify="right")
         self.frLabel.place(relx=0, rely=0, relwidth=1, relheight=0.5)
         self.frEntry.place(relx=0.1, rely=0.5, relwidth=0.8, relheight=0.5)
@@ -175,7 +175,7 @@ class MainWindow:
         self.modEntry_var = tk.StringVar()
         # Asociar la variable con el Entry y añadir el trace
         self.modEntry_var.trace_add("write", self.on_modEntry_change)
-        self.modLabel = tk.Label(self.modFrame, text="Modulación")
+        self.modLabel = tk.Label(self.modFrame, text="F. Mod (Hz)")
         self.modEntry = tk.Entry(self.modFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.modEntry_var, justify="right")
         self.modLabel.place(relx=0, rely=0, relwidth=1, relheight=0.5)
         self.modEntry.place(relx=0.1, rely=0.5, relwidth=0.8, relheight=0.5)
@@ -184,7 +184,7 @@ class MainWindow:
         self.initEntry_var = tk.StringVar()
         # Asociar la variable con el Entry y añadir el trace
         self.initEntry_var.trace_add("write", self.on_initEntry_change)
-        self.initLabel = tk.Label(self.initFrame, text="Frame Init")
+        self.initLabel = tk.Label(self.initFrame, text="F. Inicial")
         self.initEntry = tk.Entry(self.initFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.initEntry_var, justify="right")
         self.initLabel.place(relx=0, rely=0, relwidth=1, relheight=0.5)
         self.initEntry.place(relx=0.1, rely=0.5, relwidth=0.8, relheight=0.5)
@@ -193,7 +193,7 @@ class MainWindow:
         self.finEntry_var = tk.StringVar()
         # Asociar la variable con el Entry y añadir el trace
         self.finEntry_var.trace_add("write", self.on_finEntry_change)
-        self.finLabel = tk.Label(self.finFrame, text="Frame Fin")
+        self.finLabel = tk.Label(self.finFrame, text="F. Final")
         self.finEntry = tk.Entry(self.finFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.finEntry_var, justify="right")
         self.finLabel.place(relx=0, rely=0, relwidth=1, relheight=0.5)
         self.finEntry.place(relx=0.1, rely=0.5, relwidth=0.8, relheight=0.5)
