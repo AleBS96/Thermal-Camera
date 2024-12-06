@@ -338,7 +338,7 @@ class MainWindow:
     # Función para redimensionar la imagen 
     def load_icon(self, ruta, alto, ancho):
         imagen = Image.open(ruta)         # Abre la imagen
-        imagen = imagen.resize((ancho, alto), Image.ANTIALIAS)  # Redimensiona la imagen
+        imagen = imagen.resize((ancho, alto), Image.Resampling.LANCZOS)  # Redimensiona la imagen
         return ImageTk.PhotoImage(imagen)  # Convierte la imagen para usar en tkinter
 
     def change_colorMap(self, color_map, imagen):
