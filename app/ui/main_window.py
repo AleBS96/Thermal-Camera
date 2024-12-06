@@ -309,7 +309,7 @@ class MainWindow:
             self.controller.start_lockin()
         else:
             self.execLockinButton.config(image=self.execLockinButtonIcon)
-            self.resetLockinButton.place(relx=0.4, rely=0.15, relwidth=0.3, relheight=0.75)
+            self.resetLockinButton.place(relx=0.4, rely=0.15, relwidth=0.4, relheight=0.75)
             self.controller.stop_lockin()    
 
     def reset_lockin(self):
