@@ -134,14 +134,14 @@ class MainWindow:
         self.analysisFrame.grid(row=1, column=0, sticky="nsew")
 
         # Configurar las filas del grid en el Frame lockinFrames
-        self.lockinFrame.grid_columnconfigure(0, weight=1)
         self.lockinFrame.grid_rowconfigure(0, weight=10)
         self.lockinFrame.grid_rowconfigure(1, weight=4)
+        self.lockinFrame.grid_columnconfigure(0, weight=1)
 
         self.paramFrame = tk.Frame(self.lockinFrame)
         self.executionFrame = tk.Frame(self.lockinFrame)
 
-         # Colocando los los subframes dentro del frame toolFrams
+        # Colocando los los subframes dentro del frame toolFrams
         self.paramFrame.grid(row=0, column=0, sticky="nsew")
         self.executionFrame.grid(row=1, column=0, sticky="nsew")
 
@@ -217,7 +217,7 @@ class MainWindow:
 
         #PushButton para iniciar o pausar procesamiento lockin
         self.execLockinButton = tk.Button(self.executeFrame, image=self.execLockinButtonIcon, borderwidth=0, highlightthickness=0, command=self.toggle_lockinbutton)
-        self.execLockinButton.place(relx=0.3, rely=0.15, relwidth=0.4, relheight=0.75)
+        self.execLockinButton.place(relx=0, rely=0.15, relwidth=0.4, relheight=0.75)
         #PushButton para para reiniciar el procesamiento lockin
         self.resetLockinButton = tk.Button(self.executeFrame, image=self.resetLockinButtonIcon, borderwidth=0, highlightthickness=0, command=self.reset_lockin)
 
@@ -305,17 +305,14 @@ class MainWindow:
     def update_lockinsection(self):
         if self.lockinrunning:
             self.execLockinButton.config(image=self.stopLockinButtonIcon)
-            self.execLockinButton.place(relx=0.4, rely=0.15, relwidth=0.3, relheight=0.75)
             self.resetLockinButton.place_forget()
             self.controller.start_lockin()
         else:
             self.execLockinButton.config(image=self.execLockinButtonIcon)
-            self.execLockinButton.place(relx=0.3, rely=0.15, relwidth=0.3, relheight=0.75)
-            self.resetLockinButton.place(relx=0.6, rely=0.15, relwidth=0.3, relheight=0.75)
+            self.resetLockinButton.place(relx=0.4, rely=0.15, relwidth=0.3, relheight=0.75)
             self.controller.stop_lockin()    
 
     def reset_lockin(self):
-        self.execLockinButton.place(relx=0.4, rely=0.15, relwidth=0.3, relheight=0.75)
         self.resetLockinButton.place_forget()
         self.controller.reset_Lockin()
         self.reset_lockininformation()
