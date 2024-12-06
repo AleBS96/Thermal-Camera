@@ -271,7 +271,7 @@ class MainWindow:
         label_width = self.canvas.winfo_width()
         label_height = self.canvas.winfo_height()
         if label_width > 0 and label_height > 0:  # Evitar redimensionar a 0x0
-            img = img.resize((label_width, label_height), Image.ANTIALIAS)
+            img = img.resize((label_width, label_height), Image.Resampling.LANCZOS)
         return img
   
     def toggle_recording(self):
