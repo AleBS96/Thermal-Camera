@@ -114,12 +114,22 @@ class MainWindow:
         self.menu.add_command(image=self.graysicon, command=lambda:self.change_colorMap( "GRAYS", self.graysicon))
         self.menu.add_command(image=self.jeticon, command=lambda:self.change_colorMap("JET", self.jeticon))
 
+         # Crear los tres marcos de video
+        self.frames = [
+            tk.Canvas(self.cameraFrame),
+            tk.Canvas(self.cameraFrame),
+            tk.Canvas(self.cameraFrame)
+        ]
+
+        # Posiciones iniciales de los marcos
+        self.frames[0].place(relx=0, rely=0, relwidth=1, relheight=1)  # Grande
+
         # Crear un canvas para mostrar el video y el tiempo encima
-        self.canvas = tk.Canvas(self.cameraFrame)
-        self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)  # Utilizar place para evitar que el Label cambie el tamaño del Frame
+        #self.canvas = tk.Canvas(self.cameraFrame)
+        #self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)  # Utilizar place para evitar que el Label cambie el tamaño del Frame
 
         # Crear un texto para mostrar el tiempo y notificacion de capturade imagen
-        self.notification = self.canvas.create_text(30, 10, anchor=tk.NW, text='', fill="black", font=("Helvetica", 24))
+        self.notification = self.frames[0].create_text(30, 10, anchor=tk.NW, text='', fill="black", font=("Helvetica", 24))
 
         # Configurar las filas del grid en el Frame toolFrames
         self.toolsFrame.grid_rowconfigure(0, weight=2)  # Fila Superior
@@ -242,9 +252,9 @@ class MainWindow:
             img = Image.fromarray(frame)
             img = self.resize_image(img)
             img = ImageTk.PhotoImage(image = img)       
-             # Dibujar el video en el canvas
-            self.canvas.create_image(0, 0, anchor=tk.NW, image=img)
-            self.canvas.img = img 
+             # Dibujar el video en el frames[0]
+            self.frames[0].create_image(0, 0, anchor=tk.NW, image=img)
+            self.frames[0].img = img 
             
             if self.lockinrunning:
                 self.update_lockininformation(self.lockinporcentage, self.controller.lockIn.Fourier.CurrentFrame, self.controller.lockIn.Fourier.FinalFrame)
@@ -255,21 +265,21 @@ class MainWindow:
                 
             if self.time_visible == True:
                 # Actualizar el tiempo en el canvas
-                self.canvas.itemconfigure(self.notification, text=elapsedtime)
-                self.canvas.tag_raise(self.notification)
+                self.frames[0].itemconfigure(self.notification, text=elapsedtime)
+                self.frames[0].tag_raise(self.notification)
             
             if self.counttime < 10:
                 self.set_notification("Imagen Capturada")
 
-            self.canvas.after(10,self.update_frame)
+            self.frames[0].after(10,self.update_frame)
         else:
-            self.canvas.configure(self.notification,text="Camera not found")
-            self.canvas.tag_raise(self.notification)
+            self.frames[0].configure(self.notification,text="Camera not found")
+            self.frames[0].tag_raise(self.notification)
         
     def resize_image(self, img):
          # Redimensionar la imagen al tamaño del Label
-        label_width = self.canvas.winfo_width()
-        label_height = self.canvas.winfo_height()
+        label_width = self.frames[0].winfo_width()
+        label_height = self.frames[0].winfo_height()
         if label_width > 0 and label_height > 0:  # Evitar redimensionar a 0x0
             img = img.resize((label_width, label_height), Image.Resampling.LANCZOS)
         return img
@@ -349,8 +359,8 @@ class MainWindow:
     def set_notification(self, text):
         self.counttime += 1
         if (self.counttime < 200):
-            self.canvas.itemconfigure(self.notification, text=text)
-            self.canvas.tag_raise(self.notification)
+            self.frames[0].itemconfigure(self.notification, text=text)
+            self.frames[0].tag_raise(self.notification)
 
     def validate_input(self,text):
         return text.isdigit() and (len(text) <= 7) and int(text) > 0  # Permite solo dígitos o vacío. 
