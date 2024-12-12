@@ -28,7 +28,7 @@ class MainController:
             
             if self.lockin_running:
                 #Se realiza el procesamiento locin del frame actual
-                self.lockInPorcentage = self.lockIn.Run_Fourier(self.frame)
+                self.lockInPorcentage, self.Thermogram_Amplitude, self.Thermogram_Phase = self.lockIn.Run_Fourier(self.frame)
                 
                 if self.lockInPorcentage >= 100:
                     self.lockin_running = False
@@ -127,6 +127,12 @@ class MainController:
 
     def reset_Lockin(self):
         self.lockIn.reset_lockin()
+    
+    def get_Thermogram_Amplitude(self):
+        return self.Thermogram_Amplitude
+    
+    def get_Thermogram_Phase(self):
+        return self.Thermogram_Phase
 
     def release(self):
         self.cap.release()

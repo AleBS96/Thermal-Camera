@@ -1,7 +1,6 @@
 import tkinter as tk
-from tkinter import ttk
 from PIL import Image, ImageTk
-import os
+import app.Function.Basics as Basics
 
 class MainWindow:
     def __init__(self, controller):
@@ -14,7 +13,7 @@ class MainWindow:
         self.root = tk.Tk()
         self.root.title("Interfaz Táctil - Cámara Térmica")
         self.validate = self.root.register(self.validate_input)
-        #self.root.attributes("-fullscreen", True)
+        self.root.attributes("-fullscreen", True)
         self.counttime = 1000
         # Vincular el evento de cierre de la ventana al método de cierre
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -116,20 +115,26 @@ class MainWindow:
 
          # Crear los tres marcos de video
         self.frames = [
-            tk.Canvas(self.cameraFrame),
-            tk.Canvas(self.cameraFrame),
-            tk.Canvas(self.cameraFrame)
+            tk.Frame(self.cameraFrame),
+            tk.Frame(self.cameraFrame),
+            tk.Frame(self.cameraFrame)
         ]
 
-        # Posiciones iniciales de los marcos
-        self.frames[0].place(relx=0, rely=0, relwidth=1, relheight=1)  # Grande
+        #Posiciona el frame del video principal
+        self.frames[0].place(relx=0, rely=0, relwidth=1, relheight=1)
 
-        # Crear un canvas para mostrar el video y el tiempo encima
-        #self.canvas = tk.Canvas(self.cameraFrame)
-        #self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)  # Utilizar place para evitar que el Label cambie el tamaño del Frame
+        #Crea canvas principal, de amplitud y de fase
+        self.realtimevideoCanvas = tk.Canvas(self.frames[0])
+        self.amplitudeCanvas = tk.Canvas(self.frames[1])
+        self.phaseCanvas = tk.Canvas(self.frames[2])
+
+        # Posiciones iniciales de los marcos
+        self.realtimevideoCanvas.place(relx=0, rely=0, relwidth=1, relheight=1)  # video principal
+        self.amplitudeCanvas.place(relx=0, rely=0, relwidth=1, relheight=1)  # video amplitud
+        self.phaseCanvas.place(relx=0, rely=0, relwidth=1, relheight=1)  # video fase
 
         # Crear un texto para mostrar el tiempo y notificacion de capturade imagen
-        self.notification = self.frames[0].create_text(30, 10, anchor=tk.NW, text='', fill="black", font=("Helvetica", 24))
+        self.notification = self.realtimevideoCanvas.create_text(30, 10, anchor=tk.NW, text='', fill="black", font=("Helvetica", 24))
 
         # Configurar las filas del grid en el Frame toolFrames
         self.toolsFrame.grid_rowconfigure(0, weight=2)  # Fila Superior
@@ -250,36 +255,38 @@ class MainWindow:
         ret,frame,elapsedtime,self.time_visible, self.lockinporcentage, lockinrunning = self.controller.update_frame()
         if ret == True:
             img = Image.fromarray(frame)
-            img = self.resize_image(img)
+            img = self.resize_image(img, self.realtimevideoCanvas)
             img = ImageTk.PhotoImage(image = img)       
-             # Dibujar el video en el frames[0]
-            self.frames[0].create_image(0, 0, anchor=tk.NW, image=img)
-            self.frames[0].img = img 
+             # Dibujar el video en el realtimevideoCanvas
+            self.realtimevideoCanvas.create_image(0, 0, anchor=tk.NW, image=img)
+            self.realtimevideoCanvas.img = img 
             
             if self.lockinrunning:
                 self.update_lockininformation(self.lockinporcentage, self.controller.lockIn.Fourier.CurrentFrame, self.controller.lockIn.Fourier.FinalFrame)
+                self.update_Alplitudphase()
+                self.update_Phase()
                 if self.lockinporcentage >= 100:
                     self.lockinrunning = False
                     self.update_lockinsection()
-           
                 
+                   
             if self.time_visible == True:
                 # Actualizar el tiempo en el canvas
-                self.frames[0].itemconfigure(self.notification, text=elapsedtime)
-                self.frames[0].tag_raise(self.notification)
+                self.realtimevideoCanvas.itemconfigure(self.notification, text=elapsedtime)
+                self.realtimevideoCanvas.tag_raise(self.notification)
             
             if self.counttime < 10:
                 self.set_notification("Imagen Capturada")
 
-            self.frames[0].after(10,self.update_frame)
+            self.realtimevideoCanvas.after(10,self.update_frame)
         else:
-            self.frames[0].configure(self.notification,text="Camera not found")
-            self.frames[0].tag_raise(self.notification)
+            self.realtimevideoCanvas.configure(self.notification,text="Camera not found")
+            self.realtimevideoCanvas.tag_raise(self.notification)
         
-    def resize_image(self, img):
+    def resize_image(self, img, parentFrame):
          # Redimensionar la imagen al tamaño del Label
-        label_width = self.frames[0].winfo_width()
-        label_height = self.frames[0].winfo_height()
+        label_width = parentFrame.winfo_width()
+        label_height = parentFrame.winfo_height()
         if label_width > 0 and label_height > 0:  # Evitar redimensionar a 0x0
             img = img.resize((label_width, label_height), Image.Resampling.LANCZOS)
         return img
@@ -316,6 +323,7 @@ class MainWindow:
         if self.lockinrunning:
             self.execLockinButton.config(image=self.stopLockinButtonIcon)
             self.resetLockinButton.place_forget()
+            self.showSecondaryvideoframes()
             self.controller.start_lockin()
         else:
             self.execLockinButton.config(image=self.execLockinButtonIcon)
@@ -329,6 +337,8 @@ class MainWindow:
 
     def reset_lockininformation(self):      
         self.update_lockininformation(0, 0, self.controller.lockIn.Fourier.FinalFrame)
+        self.resetrealtimevideoCanvas()
+        self.hideSecondaryvideoframes()
 
     def update_lockininformation(self, porcentage, PorcessedFrame, FinalFrame):
         self.porcentageLabel.config(text="{:.0f}".format(porcentage)+"%")
@@ -359,8 +369,8 @@ class MainWindow:
     def set_notification(self, text):
         self.counttime += 1
         if (self.counttime < 200):
-            self.frames[0].itemconfigure(self.notification, text=text)
-            self.frames[0].tag_raise(self.notification)
+            self.realtimevideoCanvas.itemconfigure(self.notification, text=text)
+            self.realtimevideoCanvas.tag_raise(self.notification)
 
     def validate_input(self,text):
         return text.isdigit() and (len(text) <= 7) and int(text) > 0  # Permite solo dígitos o vacío. 
@@ -384,6 +394,72 @@ class MainWindow:
     def on_finEntry_change(self, name, index, mode):
         self.controller.on_finEntry_change(float(self.finEntry_var.get()))
         self.update_lockininformation(self.lockinporcentage, self.controller.lockIn.Fourier.CurrentFrame, self.controller.lockIn.Fourier.FinalFrame)
+
+    def showSecondaryvideoframes(self):
+        self.frames[1].place(relx=0.80, rely=0.60, relwidth=0.2, relheight=0.2)  # Pequeño 1
+        self.frames[2].place(relx=0.80, rely=0.80, relwidth=0.2, relheight=0.2)  # Pequeño 2
+        # Asociar eventos de clic dinámicamente
+        for frame in self.frames:
+            frame.winfo_children()[0].bind("<Button-1>", lambda event, clicked_frame=frame: self.swap_videos(clicked_frame))
+      
+        # Asegurar que el marco más grande esté siempre al fondo inicialmente
+        self.update_frame_order()
+
+    def hideSecondaryvideoframes(self):
+        self.frames[1].place_forget()  # Pequeño 1
+        self.frames[2].place_forget()  # Pequeño 2
+
+    def resetrealtimevideoCanvas(self):
+        self.frames[0].place(relx=0, rely=0, relwidth=1, relheight=1)
+
+    def swap_videos(self, clicked_frame):
+        # Calcular cuál es el marco más grande según el área ocupada
+        largest_frame = max(self.frames, key=lambda frame: float(frame.place_info()["relwidth"]) * float(frame.place_info()["relheight"]))
+
+        # Si el marco clicado ya es el más grande, no hacemos nada
+        if clicked_frame == largest_frame:
+            return
+
+        # Intercambiar posición y tamaño entre el marco clicado y el más grande
+        largest_geometry = largest_frame.place_info()
+        clicked_geometry = clicked_frame.place_info()
+
+        largest_frame.place(relx=clicked_geometry["relx"], rely=clicked_geometry["rely"],
+                            relwidth=clicked_geometry["relwidth"], relheight=clicked_geometry["relheight"])
+        clicked_frame.place(relx=largest_geometry["relx"], rely=largest_geometry["rely"],
+                            relwidth=largest_geometry["relwidth"], relheight=largest_geometry["relheight"])
+
+        # Actualizar el orden de los marcos para mantener el más grande al fondo
+        self.update_frame_order()
+
+    def update_frame_order(self):
+        # Determinar cuál es el marco más grande dinámicamente
+        largest_frame = max(self.frames, key=lambda frame: float(frame.place_info()["relwidth"]) * float(frame.place_info()["relheight"]))
+
+        # Enviar el marco más grande al fondo
+        largest_frame.lower()
+
+        # Traer los demás marcos al frente, respetando el orden
+        for frame in self.frames:
+            if frame != largest_frame:
+                frame.lift
+
+    def update_Alplitudphase(self):
+        img = Image.fromarray(Basics.imgNormalize(self.controller.get_Thermogram_Amplitude()))
+        img = self.resize_image(img, self.amplitudeCanvas)
+        img = ImageTk.PhotoImage(image = img)       
+         # Dibujar el video en el realtimevideoCanvas
+        self.amplitudeCanvas.create_image(0, 0, anchor=tk.NW, image=img)
+        self.amplitudeCanvas.img = img 
+
+    def update_Phase(self):
+        img = Image.fromarray(Basics.imgNormalize(self.controller.get_Thermogram_Phase()))
+        img = self.resize_image(img,self.phaseCanvas)
+        img = ImageTk.PhotoImage(image = img)       
+        # Dibujar el video en el realtimevideoCanvas
+        self.phaseCanvas.create_image(0, 0, anchor=tk.NW, image=img)
+        self.phaseCanvas.img = img 
+        
 
 
        

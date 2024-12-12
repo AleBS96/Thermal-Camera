@@ -19,6 +19,14 @@ class LockIn ():
         return self.__frame
     
     @property
+    def Thermogram_Amplitude(self):
+        return self.Fourier.Thermogram_Amplitude
+    
+    @property
+    def Thermogram_Phase(self):
+        return self.Fourier.Thermogram_Phase
+    
+    @property
     def Fourier(self) -> Fourier: 
         return self.__fourier
 
@@ -32,8 +40,8 @@ class LockIn ():
     
     @Frame.setter
     def Frame(self, frame):
-        self.__frame.append(frame) 
-    
+        self.__frame.append(frame)
+        
     #  Execute the Fourier Method
     def Run_Fourier(self, img):
         self.Frame = img
@@ -42,7 +50,8 @@ class LockIn ():
         if ret:
             self.__fourier.Thermogram = frame
 
-        return  self.__fourier.Porcentage
+        return  self.__fourier.Porcentage, self.Thermogram_Amplitude, self.Thermogram_Phase
+    
     
     def reset_lockin(self):
         self.Fourier.reset_fourier()
