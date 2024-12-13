@@ -1,6 +1,5 @@
 import tkinter as tk
 from PIL import Image, ImageTk
-import app.Function.Basics as Basics
 
 class MainWindow:
     def __init__(self, controller):
@@ -116,8 +115,8 @@ class MainWindow:
          # Crear los tres marcos de video
         self.frames = [
             tk.Frame(self.cameraFrame),
-            tk.Frame(self.cameraFrame),
-            tk.Frame(self.cameraFrame)
+            tk.Frame(self.cameraFrame, bg = "blue"),
+            tk.Frame(self.cameraFrame, bg = "green")
         ]
 
         #Posiciona el frame del video principal
@@ -254,17 +253,12 @@ class MainWindow:
     def update_frame(self):
         ret,frame,elapsedtime,self.time_visible, self.lockinporcentage, lockinrunning = self.controller.update_frame()
         if ret == True:
-            img = Image.fromarray(frame)
-            img = self.resize_image(img, self.realtimevideoCanvas)
-            img = ImageTk.PhotoImage(image = img)       
-             # Dibujar el video en el realtimevideoCanvas
-            self.realtimevideoCanvas.create_image(0, 0, anchor=tk.NW, image=img)
-            self.realtimevideoCanvas.img = img 
+            self.update_Thermogram(frame,self.realtimevideoCanvas)
             
             if self.lockinrunning:
                 self.update_lockininformation(self.lockinporcentage, self.controller.lockIn.Fourier.CurrentFrame, self.controller.lockIn.Fourier.FinalFrame)
-                self.update_Alplitudphase()
-                self.update_Phase()
+                self.update_Thermogram(self.controller.get_Thermogram_Amplitude(), self.amplitudeCanvas)
+                self.update_Thermogram(self.controller.get_Thermogram_Phase(),self.phaseCanvas)
                 if self.lockinporcentage >= 100:
                     self.lockinrunning = False
                     self.update_lockinsection()
@@ -424,6 +418,9 @@ class MainWindow:
         largest_geometry = largest_frame.place_info()
         clicked_geometry = clicked_frame.place_info()
 
+        largest_frame.place_forget()
+        clicked_frame.place_forget()
+
         largest_frame.place(relx=clicked_geometry["relx"], rely=clicked_geometry["rely"],
                             relwidth=clicked_geometry["relwidth"], relheight=clicked_geometry["relheight"])
         clicked_frame.place(relx=largest_geometry["relx"], rely=largest_geometry["rely"],
@@ -444,22 +441,16 @@ class MainWindow:
             if frame != largest_frame:
                 frame.lift
 
-    def update_Alplitudphase(self):
-        img = Image.fromarray(Basics.imgNormalize(self.controller.get_Thermogram_Amplitude()))
-        img = self.resize_image(img, self.amplitudeCanvas)
+    def update_Thermogram(self, frame, canvas):
+        img = Image.fromarray(frame)
+        img = self.resize_image(img, canvas)
         img = ImageTk.PhotoImage(image = img)       
          # Dibujar el video en el realtimevideoCanvas
-        self.amplitudeCanvas.create_image(0, 0, anchor=tk.NW, image=img)
-        self.amplitudeCanvas.img = img 
+        canvas.create_image(0, 0, anchor=tk.NW, image=img)
+        canvas.img = img 
 
-    def update_Phase(self):
-        img = Image.fromarray(Basics.imgNormalize(self.controller.get_Thermogram_Phase()))
-        img = self.resize_image(img,self.phaseCanvas)
-        img = ImageTk.PhotoImage(image = img)       
-        # Dibujar el video en el realtimevideoCanvas
-        self.phaseCanvas.create_image(0, 0, anchor=tk.NW, image=img)
-        self.phaseCanvas.img = img 
-        
+
+
 
 
        

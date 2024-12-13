@@ -4,6 +4,7 @@ import datetime
 from pathlib import Path
 from tkinter import simpledialog, messagebox
 import time
+import app.Function.Basics as Basics
 from app.models.camera_model import CameraModel
 from app.models.mediasaver_model import VideoSaver
 from app.models.mediasaver_model import ImageSaver
@@ -25,7 +26,11 @@ class MainController:
         ret, self.frame = self.cap.get_frame()
         formatted_time = None 
         if ret == True:
-            
+
+            #Formatea el frame segun los par'ametros seleccionados por el usuario
+            self.color_mapped_frame = self.frameProcessor.setColorMap(self.frame)
+            self.color_mapped_splitted_frame = self.frameProcessor.setFrameSection(self.color_mapped_frame, "TOP")   
+ 
             if self.lockin_running:
                 #Se realiza el procesamiento locin del frame actual
                 self.lockInPorcentage, self.Thermogram_Amplitude, self.Thermogram_Phase = self.lockIn.Run_Fourier(self.frame)
@@ -33,20 +38,18 @@ class MainController:
                 if self.lockInPorcentage >= 100:
                     self.lockin_running = False
                     #Save the amplitude and phase thermograms as two .png images
-                    cv2.imwrite("./Amplitude1.png", self.lockIn.Fourier.Thermogram_Amplitude)
-                    cv2.imwrite("./Phase1.png", self.lockIn.Fourier.Thermogram_Phase)
-
-            #Formatea el frame segun los par'ametros seleccionados por el usuario
-            color_mapped_frame = self.frameProcessor.setColorMap(self.frame)
-            color_mapped_splitted_frame = self.frameProcessor.setFrameSection(color_mapped_frame, "TOP")   
+                    Thermogram_Amplitude_N = Basics.imgNormalize(self.Thermogram_Amplitude)
+                    Thermogram_Phase_N = Basics.imgNormalize(self.Thermogram_Phase)
+                    cv2.imwrite("./Amplitude1.png",Thermogram_Amplitude_N)
+                    cv2.imwrite("./Phase1.png", Thermogram_Phase_N )
 
             if self.recording:
                 #Guarda el frame actual
-                self.video_saver.save_frame(color_mapped_splitted_frame)
+                self.video_saver.save_frame(self.color_mapped_splitted_frame)
                 #Calcula el tiempo transcurrido
                 formatted_time = self.elapsed_time()
                 
-        color_mapped_splitted_frame_RGB = cv2.cvtColor(color_mapped_splitted_frame, cv2.COLOR_BGR2RGB)
+        color_mapped_splitted_frame_RGB = cv2.cvtColor(self.color_mapped_splitted_frame, cv2.COLOR_BGR2RGB)
         
         return ret, color_mapped_splitted_frame_RGB, formatted_time, self.recording, self.lockInPorcentage,  self.lockin_running,
     
@@ -99,13 +102,12 @@ class MainController:
             # Crear un nombre de archivo único usando la fecha y hora actual
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             file_name = f"captura_{timestamp}.jpg"
-           
-            #Formatea el frame segun los par'ametros seleccionados por el usuario
-            color_mapped_frame = self.frameProcessor.setColorMap(self.frame)
-            color_mapped_splitted_frame = self.frameProcessor.setFrameSection(color_mapped_frame, "TOP")
-            
-            imageserver = ImageSaver(color_mapped_splitted_frame, save_dir, file_name)
-            imageserver.save_image()
+             
+            self.save_image(self.color_mapped_splitted_frame, save_dir, file_name)
+
+    def save_image(self, image, image_save_dir, image_name):       
+        imageserver = ImageSaver( image, image_save_dir, image_name)
+        imageserver.save_image()
 
     def on_frEntry_change(self, fr):
         self.lockIn.Fourier.FrameRate = fr
@@ -129,10 +131,14 @@ class MainController:
         self.lockIn.reset_lockin()
     
     def get_Thermogram_Amplitude(self):
-        return self.Thermogram_Amplitude
+        Thermogram_Amplitude_N = Basics.imgNormalize(self.Thermogram_Amplitude)
+        Thermogram_Amplitude_N_RGB = cv2.cvtColor(Thermogram_Amplitude_N, cv2.COLOR_BGR2RGB)
+        return Thermogram_Amplitude_N_RGB
     
     def get_Thermogram_Phase(self):
-        return self.Thermogram_Phase
+        Thermogram_Phase_N = Basics.imgNormalize(self.Thermogram_Phase)
+        Thermogram_Phase_N_RGB = cv2.cvtColor(Thermogram_Phase_N, cv2.COLOR_BGR2RGB)
+        return Thermogram_Phase_N_RGB
 
     def release(self):
         self.cap.release()
