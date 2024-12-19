@@ -11,6 +11,7 @@ from app.models.mediasaver_model import VideoSaver
 from app.models.mediasaver_model import ImageSaver
 from app.models.frameprocessor import FrameProcessor
 from app.models.lockin_model import LockIn
+import time
 
 class MainController:
     
@@ -150,13 +151,19 @@ class MainController:
     """ SECOND THREAD: GET THE FRAMES FROM THE THERMAL 
     DETECTOR AND PERFORM LOCKIN PROCESSING"""
     def Capture_Frame (self):
+        captureinicio = 0
         while True:
             with self.__lock:
+                
                 self.ret, self.frame = self.cap.get_frame()
                 if self.ret:
                      if self.lockin_running:
                         #Se realiza el procesamiento locin del frame actual
+                        captureinicio = time.time()  # Guarda el tiempo de inicio
                         self.lockInPorcentage, self.Thermogram_Amplitude, self.Thermogram_Phase = self.lockIn.Run_Fourier(self.frame)
+                        capturefin = time.time()  # Guarda el tiempo de fin
+                        tiempo_ejecucion = capturefin - captureinicio
+                        print(f"El tiempo de ejecución fue: {tiempo_ejecucion:.8f} segundos")
                         self.lockin_done = True
                         if self.lockInPorcentage >= 100:
                             self.lockin_running = False
