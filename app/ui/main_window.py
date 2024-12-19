@@ -255,15 +255,14 @@ class MainWindow:
         if ret == True:
             self.update_Thermogram(frame,self.realtimevideoCanvas)
             
-            if self.lockinrunning:
+            if self.lockinrunning and self.controller.is_lockin_done():
                 self.update_lockininformation(self.lockinporcentage, self.controller.lockIn.Fourier.CurrentFrame, self.controller.lockIn.Fourier.FinalFrame)
                 self.update_Thermogram(self.controller.get_Thermogram_Amplitude(), self.amplitudeCanvas)
                 self.update_Thermogram(self.controller.get_Thermogram_Phase(),self.phaseCanvas)
                 if self.lockinporcentage >= 100:
                     self.lockinrunning = False
                     self.update_lockinsection()
-                
-                   
+
             if self.time_visible == True:
                 # Actualizar el tiempo en el canvas
                 self.realtimevideoCanvas.itemconfigure(self.notification, text=elapsedtime)
@@ -272,10 +271,7 @@ class MainWindow:
             if self.counttime < 10:
                 self.set_notification("Imagen Capturada")
 
-            self.realtimevideoCanvas.after(10,self.update_frame)
-        else:
-            self.realtimevideoCanvas.configure(self.notification,text="Camera not found")
-            self.realtimevideoCanvas.tag_raise(self.notification)
+        self.realtimevideoCanvas.after(10,self.update_frame)
         
     def resize_image(self, img, parentFrame):
          # Redimensionar la imagen al tamaño del Label

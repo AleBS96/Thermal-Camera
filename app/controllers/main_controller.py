@@ -4,6 +4,7 @@ import datetime
 from pathlib import Path
 from tkinter import simpledialog, messagebox
 import time
+import threading
 import app.Function.Basics as Basics
 from app.models.camera_model import CameraModel
 from app.models.mediasaver_model import VideoSaver
@@ -13,6 +14,8 @@ from app.models.lockin_model import LockIn
 
 class MainController:
     
+    __lock                      = threading.Lock()
+    
     def __init__(self):
         self.cap = CameraModel(0)
         self.frameProcessor = FrameProcessor()
@@ -21,37 +24,29 @@ class MainController:
         self.lockInPorcentage = 0
         self.lockin_running = False
         self.frame = None
+        self.ret = False
+        self.lockin_done = False
+        hilo_video = threading.Thread(target=self.Capture_Frame)
+        hilo_video.start()
+
 
     def update_frame(self):
-        ret, self.frame = self.cap.get_frame()
-        formatted_time = None 
-        if ret == True:
-
+        formatted_time = None
+        color_mapped_splitted_frame_RGB = None
+        if self.ret == True:
             #Formatea el frame segun los par'ametros seleccionados por el usuario
             self.color_mapped_frame = self.frameProcessor.setColorMap(self.frame)
             self.color_mapped_splitted_frame = self.frameProcessor.setFrameSection(self.color_mapped_frame, "TOP")   
  
-            if self.lockin_running:
-                #Se realiza el procesamiento locin del frame actual
-                self.lockInPorcentage, self.Thermogram_Amplitude, self.Thermogram_Phase = self.lockIn.Run_Fourier(self.frame)
-                
-                if self.lockInPorcentage >= 100:
-                    self.lockin_running = False
-                    #Save the amplitude and phase thermograms as two .png images
-                    Thermogram_Amplitude_N = Basics.imgNormalize(self.Thermogram_Amplitude)
-                    Thermogram_Phase_N = Basics.imgNormalize(self.Thermogram_Phase)
-                    cv2.imwrite("./Amplitude1.png",Thermogram_Amplitude_N)
-                    cv2.imwrite("./Phase1.png", Thermogram_Phase_N )
-
             if self.recording:
                 #Guarda el frame actual
-                self.video_saver.save_frame(self.color_mapped_splitted_frame)
-                #Calcula el tiempo transcurrido
-                formatted_time = self.elapsed_time()
+                 self.video_saver.save_frame(self.color_mapped_splitted_frame)
+                 #Calcula el tiempo transcurrido
+                 formatted_time = self.elapsed_time()
                 
-        color_mapped_splitted_frame_RGB = cv2.cvtColor(self.color_mapped_splitted_frame, cv2.COLOR_BGR2RGB)
-        
-        return ret, color_mapped_splitted_frame_RGB, formatted_time, self.recording, self.lockInPorcentage,  self.lockin_running,
+            color_mapped_splitted_frame_RGB = cv2.cvtColor(self.color_mapped_splitted_frame, cv2.COLOR_BGR2RGB)
+
+        return self.ret, color_mapped_splitted_frame_RGB, formatted_time, self.recording, self.lockInPorcentage,  self.lockin_running,
     
     def elapsed_time (self):
         # Calcular el tiempo transcurrido y formatearlo como hh:mm:ss
@@ -140,6 +135,9 @@ class MainController:
         Thermogram_Phase_N_RGB = cv2.cvtColor(Thermogram_Phase_N, cv2.COLOR_BGR2RGB)
         return Thermogram_Phase_N_RGB
 
+    def is_lockin_done(self):
+        return self.lockin_done
+    
     def release(self):
         self.cap.release()
 
@@ -148,5 +146,28 @@ class MainController:
         response = messagebox.askokcancel("Confirmación", "¿Estás seguro que desea apagar el dispsitivo?")   
         if response:  # Si se presiona "OK"
             os.system("sudo shutdown now")
+
+    """ SECOND THREAD: GET THE FRAMES FROM THE THERMAL 
+    DETECTOR AND PERFORM LOCKIN PROCESSING"""
+    def Capture_Frame (self):
+        while True:
+            with self.__lock:
+                self.ret, self.frame = self.cap.get_frame()
+                if self.ret:
+                     if self.lockin_running:
+                        #Se realiza el procesamiento locin del frame actual
+                        self.lockInPorcentage, self.Thermogram_Amplitude, self.Thermogram_Phase = self.lockIn.Run_Fourier(self.frame)
+                        self.lockin_done = True
+                        if self.lockInPorcentage >= 100:
+                            self.lockin_running = False
+                            #Save the amplitude and phase thermograms as two .png images
+                            Thermogram_Amplitude_N = Basics.imgNormalize(self.Thermogram_Amplitude)
+                            Thermogram_Phase_N = Basics.imgNormalize(self.Thermogram_Phase)
+                            cv2.imwrite("./Amplitude1.png",Thermogram_Amplitude_N)
+                            cv2.imwrite("./Phase1.png", Thermogram_Phase_N )
+
+
+
         
+
     
