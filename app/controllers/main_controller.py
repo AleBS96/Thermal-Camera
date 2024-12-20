@@ -12,6 +12,7 @@ from app.models.mediasaver_model import VideoSaver
 from app.models.mediasaver_model import ImageSaver
 from app.models.frameprocessor import FrameProcessor
 from app.models.lockin_model import LockIn
+import time
 
 class MainController:
     
@@ -41,26 +42,26 @@ class MainController:
     def FrameBuffer(self) -> deque:
         if len(self.__frames_buffer) != 0:
             return True, self.__frames_buffer.popleft()
-        else:
             return False, None
+        else:
     
     @FrameBuffer.setter
     def FrameBuffer(self, frame):
         self.__frames_buffer.append(frame)
  
     def clearFrameBuffer(self):
-        self.__frames_buffer.clear()
 
+        self.__frames_buffer.clear()
     def update_frame(self):
         formatted_time = None
         color_mapped_splitted_frame_RGB = None
         if self.ret == True:
             if self.lockin_running:
-                
                 buffer_ret, buffer_frame = self.FrameBuffer
                 
-                if buffer_ret:
+                
                     #Se realiza el procesamiento locin del frame actual
+                if buffer_ret:
                     self.lockInPorcentage, self.Thermogram_Amplitude, self.Thermogram_Phase = self.lockIn.Run_Fourier(buffer_frame)
                     self.lockin_done = True
                     if self.lockInPorcentage >= 100:
@@ -68,13 +69,12 @@ class MainController:
                         #Save the amplitude and phase thermograms as two .png images
                         Thermogram_Amplitude_N = Basics.imgNormalize(self.Thermogram_Amplitude)
                         Thermogram_Phase_N = Basics.imgNormalize(self.Thermogram_Phase)
-                        cv2.imwrite("./Amplitude1.png",Thermogram_Amplitude_N)
                         cv2.imwrite("./Phase1.png", Thermogram_Phase_N )
+                        cv2.imwrite("./Amplitude1.png",Thermogram_Amplitude_N)
 
             #Formatea el frame segun los par'ametros seleccionados por el usuario
             self.color_mapped_frame = self.frameProcessor.setColorMap(self.frame)
             self.color_mapped_splitted_frame = self.frameProcessor.setFrameSection(self.color_mapped_frame, "TOP")   
- 
             if self.recording:
                 #Guarda el frame actual
                  self.video_saver.save_frame(self.color_mapped_splitted_frame)
@@ -187,8 +187,7 @@ class MainController:
         if response:  # Si se presiona "OK"
             os.system("sudo shutdown now")
 
-    """ SECOND THREAD: GET THE FRAMES FROM THE THERMAL 
-    DETECTOR AND PERFORM LOCKIN PROCESSING"""
+    """ SECOND THREAD: GET THE FRAMES FROM THE THERMAL DETECTOR"""
     def Capture_Frame (self):
         while True:
             with self.__lock:
@@ -200,8 +199,6 @@ class MainController:
                 break
                     
 
-
-
-        
+                    
 
     
