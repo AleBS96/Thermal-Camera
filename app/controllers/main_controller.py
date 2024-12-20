@@ -5,6 +5,7 @@ from pathlib import Path
 from tkinter import simpledialog, messagebox
 import time
 import threading
+from collections import deque
 import app.Function.Basics as Basics
 from app.models.camera_model import CameraModel
 from app.models.mediasaver_model import VideoSaver
@@ -15,25 +16,61 @@ from app.models.lockin_model import LockIn
 class MainController:
     
     __lock                      = threading.Lock()
-    
+    __frames_buffer             = deque()
+
     def __init__(self):
         self.cap = CameraModel(0)
         self.frameProcessor = FrameProcessor()
         self.lockIn = LockIn(self.cap.fps(), 60.0, 0, 10000)
+        self.softwarerunning = True
         self.recording = False
         self.lockInPorcentage = 0
         self.lockin_running = False
         self.frame = None
         self.ret = False
         self.lockin_done = False
-        hilo_video = threading.Thread(target=self.Capture_Frame)
-        hilo_video.start()
+        self.delay = 1/self.cap.fps()
+        self.hilo_video = threading.Thread(target=self.Capture_Frame)
+        self.hilo_video.start()
 
+    @property
+    def FrameBuffer(self) -> deque: 
+        return self.__frames_buffer
+
+    @FrameBuffer.getter
+    def FrameBuffer(self) -> deque:
+        if len(self.__frames_buffer) != 0:
+            return True, self.__frames_buffer.popleft()
+        else:
+            return False, None
+    
+    @FrameBuffer.setter
+    def FrameBuffer(self, frame):
+        self.__frames_buffer.append(frame)
+ 
+    def clearFrameBuffer(self):
+        self.__frames_buffer.clear()
 
     def update_frame(self):
         formatted_time = None
         color_mapped_splitted_frame_RGB = None
         if self.ret == True:
+            if self.lockin_running:
+                
+                buffer_ret, buffer_frame = self.FrameBuffer
+                
+                if buffer_ret:
+                    #Se realiza el procesamiento locin del frame actual
+                    self.lockInPorcentage, self.Thermogram_Amplitude, self.Thermogram_Phase = self.lockIn.Run_Fourier(buffer_frame)
+                    self.lockin_done = True
+                    if self.lockInPorcentage >= 100:
+                        self.lockin_running = False
+                        #Save the amplitude and phase thermograms as two .png images
+                        Thermogram_Amplitude_N = Basics.imgNormalize(self.Thermogram_Amplitude)
+                        Thermogram_Phase_N = Basics.imgNormalize(self.Thermogram_Phase)
+                        cv2.imwrite("./Amplitude1.png",Thermogram_Amplitude_N)
+                        cv2.imwrite("./Phase1.png", Thermogram_Phase_N )
+
             #Formatea el frame segun los par'ametros seleccionados por el usuario
             self.color_mapped_frame = self.frameProcessor.setColorMap(self.frame)
             self.color_mapped_splitted_frame = self.frameProcessor.setFrameSection(self.color_mapped_frame, "TOP")   
@@ -124,7 +161,9 @@ class MainController:
 
     def reset_Lockin(self):
         self.lockIn.reset_lockin()
-    
+        self.lockin_done = False
+        self.clearFrameBuffer()
+
     def get_Thermogram_Amplitude(self):
         Thermogram_Amplitude_N = Basics.imgNormalize(self.Thermogram_Amplitude)
         Thermogram_Amplitude_N_RGB = cv2.cvtColor(Thermogram_Amplitude_N, cv2.COLOR_BGR2RGB)
@@ -139,6 +178,7 @@ class MainController:
         return self.lockin_done
     
     def release(self):
+        self.softwarerunning = False
         self.cap.release()
 
     def shutdown_system(self):
@@ -153,18 +193,12 @@ class MainController:
         while True:
             with self.__lock:
                 self.ret, self.frame = self.cap.get_frame()
-                if self.ret:
-                     if self.lockin_running:
-                        #Se realiza el procesamiento locin del frame actual
-                        self.lockInPorcentage, self.Thermogram_Amplitude, self.Thermogram_Phase = self.lockIn.Run_Fourier(self.frame)
-                        self.lockin_done = True
-                        if self.lockInPorcentage >= 100:
-                            self.lockin_running = False
-                            #Save the amplitude and phase thermograms as two .png images
-                            Thermogram_Amplitude_N = Basics.imgNormalize(self.Thermogram_Amplitude)
-                            Thermogram_Phase_N = Basics.imgNormalize(self.Thermogram_Phase)
-                            cv2.imwrite("./Amplitude1.png",Thermogram_Amplitude_N)
-                            cv2.imwrite("./Phase1.png", Thermogram_Phase_N )
+                if self.ret and self.lockin_running:
+                    self.FrameBuffer = self.frame
+            time.sleep(self.delay)
+            if not self.softwarerunning:
+                break
+                    
 
 
 
