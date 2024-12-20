@@ -42,9 +42,9 @@ class MainController:
     def FrameBuffer(self) -> deque:
         if len(self.__frames_buffer) != 0:
             return True, self.__frames_buffer.popleft()
-            return False, None
         else:
-    
+            return False, None
+        
     @FrameBuffer.setter
     def FrameBuffer(self, frame):
         self.__frames_buffer.append(frame)
