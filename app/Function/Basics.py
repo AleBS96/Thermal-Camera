@@ -35,9 +35,12 @@ def imgDivide(img: MatLike) -> MatLike:
     return img
 
 def imgPrepare(img : MatLike) -> MatLike:
-    __tmp = cv2.cvtColor(img,cv2.COLOR_RGB2GRAY) # converts the image to gray scale
+    """ __tmp = cv2.cvtColor(img,cv2.COLOR_RGB2GRAY) # converts the image to gray scale
     __tmp = (__tmp.astype(np.float64)) / 255
+    return np.asarray(__tmp)"""
+    __tmp = (img.astype(np.float64))
     return np.asarray(__tmp)
+
 
 def imgNormalize(img : MatLike) -> MatLike:
     return cv2.normalize(img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F).astype(np.uint8) 

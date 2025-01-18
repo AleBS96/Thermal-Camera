@@ -10,7 +10,7 @@ class Fourier:
     __final_frame       = int                   # Represents the number of the final's frame of the video that will be process
     __modulation        = float                 # Represents the modulation's frequency of the reference signal                 (fe)
     __K                 = float                 # Represents the K's factor, defined by this Method like                        [N(fe/fs)+1]
-    __FramesByPeriod    = int                   # Represents the N's factor, it is knowed like frames by lock-in periods        (N)
+    #__FramesByPeriod    = int                   # Represents the N's factor, it is knowed like frames by lock-in periods        (N)
     __currentFrame      = int                   # Represents the current frame in the range of frames to be process
     __porcentage        = int                   # Represents the progress's porcentage of the process compute   
     __last_image_Frame  = []                    # Represents the last image loader by openCV
@@ -29,7 +29,7 @@ class Fourier:
     
     Wn          = lambda _, W,  n , K: pow( W, (n - 1) * (K - 1))
     KFactor     = lambda _, N,fe,fs: N*( fe / fs )+1
-    FbP         = lambda _, modulation , framerate : (1/modulation) / (1/framerate)     # Frames by Lock-in Period
+    #FbP         = lambda _, modulation , framerate : (1/modulation) / (1/framerate)     # Frames by Lock-in Period
     WFactor     = lambda _, N : cmath.exp(-1j*2*cmath.pi/N)
     cp          = lambda _, F , N : int(F / N) + 1                                      # Current lock-in period value
     rangeFrame  = lambda _, f, i : f - i                                                # Number of total frames to be process
@@ -54,7 +54,7 @@ class Fourier:
     @CurrentFrame.setter                        # Sets the number of frame that is processing
     def CurrentFrame(self,value:int):
         self.__currentFrame = value
-        self.__porcentage   = self.vop(self.Frames,value)
+        self.__porcentage   = self.vop(self.Frames,value-1)
         for watcher in self.__listener:
             watcher.Porcentage_Changed(self.Porcentage)
         
@@ -74,9 +74,8 @@ class Fourier:
     @FrameRate.setter
     def FrameRate(self, value:int):             # Sets the Frame Rate Value,  you must update the same values in Modulation property
         self.__Frame_Rate       = value
-        self.__FramesByPeriod   = self.FbP(self.Modulation,self.FrameRate)
+        #self.__FramesByPeriod   = self.FbP(self.Modulation,self.FrameRate)
         self.__K                = self.KFactor(self.N, self.Modulation, self.FrameRate)
-        self.__W                = self.WFactor(self.N)
 
     # Total Frames to be Processed propeties
     @property
@@ -95,7 +94,9 @@ class Fourier:
     @InitFrame.setter                           # Sets the number of initial's frame of the video to be processed
     def InitFrame(self, value:int):
         self.__init_frame = value
-        self.__Frames = self.rangeFrame(self.FinalFrame,self.InitFrame)
+        self.__Frames           = self.rangeFrame(self.FinalFrame,self.InitFrame)
+        self.__K                = self.KFactor(self.N, self.Modulation, self.FrameRate)
+        self.__W                = self.WFactor(self.N)
 
     # Properties related with the final's frame of the video that will be processed
     @property                                   # Gets the number of final's frame of the video that will be process
@@ -104,8 +105,10 @@ class Fourier:
 
     @FinalFrame.setter                          # Sets the number of final's frame of the video that will be process
     def FinalFrame(self, value:int):
-        self.__final_frame = value
-        self.__Frames = self.rangeFrame(self.FinalFrame,self.InitFrame)
+        self.__final_frame      = value
+        self.__Frames           = self.rangeFrame(self.FinalFrame,self.InitFrame)
+        self.__K                = self.KFactor(self.N, self.Modulation, self.FrameRate)
+        self.__W                = self.WFactor(self.N)
 
     # Properties relates with the modulation's frequency of the lock-in signal
     @property                                   # Gets the modulation's frequency of the reference's signal 
@@ -115,9 +118,9 @@ class Fourier:
     @Modulation.setter                          # Sets the modulation's frequency of the reference's signal
     def Modulation(self, value: float):
         self.__modulation       = value
-        self.__FramesByPeriod   = self.FbP(self.Modulation,self.FrameRate)
+        #self.__FramesByPeriod   = self.FbP(self.Modulation,self.FrameRate)
         self.__K                = self.KFactor(self.N,self.Modulation,self.FrameRate)
-        self.__W                = self.WFactor(self.N)
+
     # Properties related with the k's Factor used byy this Method 
     @property                                   # gets the value of K's Factor used by this Method
     def K(self)-> int:
@@ -126,7 +129,7 @@ class Fourier:
     # Properties related with the N's Factor used by this Method
     @property
     def N(self)-> int:
-        return self.__FramesByPeriod
+        return self.__Frames
 
     # properties related with the W's Factor used by this Method
     @property
@@ -223,7 +226,7 @@ class Fourier:
 
 
     def __init__(self):
-        self.isImageFull = False
+        self.isImageFull = True
         self.__init_frame = 0
         self.__final_frame = 3000
         self.__Frame_Rate = 1

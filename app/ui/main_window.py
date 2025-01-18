@@ -166,47 +166,44 @@ class MainWindow:
         self.paramFrame.grid_rowconfigure(1, weight=1)
 
         # Crear marcos de segundo nivel
-        self.frFrame = tk.Frame(self.paramFrame)  # Marco de ingresar parámetro framerate
-        self.modFrame = tk.Frame(self.paramFrame)    # Marco de ingresar parámetro modulación
-        self.initFrame = tk.Frame(self.paramFrame)  # Marco de ingresar parámetro frame inicial
-        self.finFrame = tk.Frame(self.paramFrame)  # Marco de ingresar parámetro frame final
+        self.frFrame = tk.Frame(self.paramFrame)        # Marco de ingresar parámetro framerate
+        self.modFrame = tk.Frame(self.paramFrame)       # Marco de ingresar parámetro modulación
+        self.initFrame = tk.Frame(self.paramFrame)      # Marco de ingresar parámetro frame inicial
+        self.finFrame = tk.Frame(self.paramFrame)       # Marco de ingresar parámetro frame final
 
         self.frFrame.grid(row=0, column=0, sticky="nsew")
         self.modFrame.grid(row=1, column=0, sticky="nsew")
         self.initFrame.grid(row=0, column=1, sticky="nsew")
         self.finFrame.grid(row=1, column=1, sticky="nsew")
 
-        # Crear una variable de control
-        self.frEntry_var = tk.StringVar()
-        # Asociar la variable con el Entry y añadir el trace
-        self.frEntry_var.trace_add("write", self.on_frEntry_change)
+        
+        #Entrada de FrameRate
+        self.frEntry_var = tk.StringVar()                                                   # Crear una variable de control
+        self.frEntry_var.trace_add("write", self.on_frEntry_change)                         # Asociar la variable con el Entry y añadir el trace
         self.frLabel = tk.Label(self.frFrame, text="FPS")
         self.frEntry = tk.Entry(self.frFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.frEntry_var, justify="right")
         self.frLabel.place(relx=0, rely=0, relwidth=1, relheight=0.5)
         self.frEntry.place(relx=0.1, rely=0.5, relwidth=0.8, relheight=0.5)
 
-        # Crear una variable de control
-        self.modEntry_var = tk.StringVar()
-        # Asociar la variable con el Entry y añadir el trace
-        self.modEntry_var.trace_add("write", self.on_modEntry_change)
+        #Entrada de Frecuencia de modulacion
+        self.modEntry_var = tk.StringVar()                                                   # Crear una variable de control
+        self.modEntry_var.trace_add("write", self.on_modEntry_change)                        # Asociar la variable con el Entry y añadir el trace
         self.modLabel = tk.Label(self.modFrame, text="F. Mod (Hz)")
         self.modEntry = tk.Entry(self.modFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.modEntry_var, justify="right")
         self.modLabel.place(relx=0, rely=0, relwidth=1, relheight=0.5)
         self.modEntry.place(relx=0.1, rely=0.5, relwidth=0.8, relheight=0.5)
 
-        # Crear una variable de control
-        self.initEntry_var = tk.StringVar()
-        # Asociar la variable con el Entry y añadir el trace
-        self.initEntry_var.trace_add("write", self.on_initEntry_change)
+        #Entrada de Frecuencia frame inicial
+        self.initEntry_var = tk.StringVar()                                                  # Crear una variable de control
+        self.initEntry_var.trace_add("write", self.on_initEntry_change)                      # Asociar la variable con el Entry y añadir el trace
         self.initLabel = tk.Label(self.initFrame, text="F. Inicial")
         self.initEntry = tk.Entry(self.initFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.initEntry_var, justify="right")
         self.initLabel.place(relx=0, rely=0, relwidth=1, relheight=0.5)
         self.initEntry.place(relx=0.1, rely=0.5, relwidth=0.8, relheight=0.5)
 
-        # Crear una variable de control
-        self.finEntry_var = tk.StringVar()
-        # Asociar la variable con el Entry y añadir el trace
-        self.finEntry_var.trace_add("write", self.on_finEntry_change)
+        #Entrada de Frecuencia frame final
+        self.finEntry_var = tk.StringVar()                                                  # Crear una variable de control
+        self.finEntry_var.trace_add("write", self.on_finEntry_change)                       # Asociar la variable con el Entry y añadir el trace
         self.finLabel = tk.Label(self.finFrame, text="F. Final")
         self.finEntry = tk.Entry(self.finFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.finEntry_var, justify="right")
         self.finLabel.place(relx=0, rely=0, relwidth=1, relheight=0.5)
@@ -253,10 +250,10 @@ class MainWindow:
     def update_frame(self):
         ret,frame,elapsedtime,self.time_visible, self.lockinporcentage, lockinrunning = self.controller.update_frame()
         if ret == True:
-            self.update_Thermogram(frame,self.realtimevideoCanvas)
+            #self.update_Thermogram(frame,self.realtimevideoCanvas)
             
             if self.lockinrunning and self.controller.is_lockin_done():
-                self.update_lockininformation(self.lockinporcentage, self.controller.lockIn.Fourier.CurrentFrame, self.controller.lockIn.Fourier.FinalFrame)
+                self.update_lockininformation(self.lockinporcentage, self.controller.lockIn.Fourier.CurrentFrame-1, self.controller.lockIn.Fourier.FinalFrame)
                 self.update_Thermogram(self.controller.get_Thermogram_Amplitude(), self.amplitudeCanvas)
                 self.update_Thermogram(self.controller.get_Thermogram_Phase(),self.phaseCanvas)
                 if self.lockinporcentage >= 100:
@@ -362,9 +359,6 @@ class MainWindow:
             self.realtimevideoCanvas.itemconfigure(self.notification, text=text)
             self.realtimevideoCanvas.tag_raise(self.notification)
 
-    def validate_input(self,text):
-        return text.isdigit() and (len(text) <= 7) and int(text) > 0  # Permite solo dígitos o vacío. 
-
     #Sets the default parameters for Lockin processing
     def set_defautLockinparameters(self):
         self.frEntry_var.set(self.controller.lockIn.Fourier.FrameRate)
@@ -444,6 +438,16 @@ class MainWindow:
          # Dibujar el video en el realtimevideoCanvas
         canvas.create_image(0, 0, anchor=tk.NW, image=img)
         canvas.img = img 
+    
+    #VALIDACIONES DE ENTRADA DE PARAMETROS
+    def validate_input(self,text):
+        """
+        Validates that the values ​​are numeric and not empty
+        """                        
+        return text.isdigit() and (len(text) <= 7) and int(text) > 0  # Permite solo dígitos o vacío. 
+    
+
+
 
 
 

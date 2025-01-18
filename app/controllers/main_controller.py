@@ -12,7 +12,9 @@ from app.models.mediasaver_model import VideoSaver
 from app.models.mediasaver_model import ImageSaver
 from app.models.frameprocessor import FrameProcessor
 from app.models.lockin_model import LockIn
-import time
+from app.models.exportData_model import ExportData
+
+from app.models.media import Video
 
 class MainController:
     
@@ -20,9 +22,11 @@ class MainController:
     __frames_buffer             = deque()
 
     def __init__(self):
-        self.cap = CameraModel(0)
+        self.cap = CameraModel(0, "YUYV")
+        #self.video = Video("video.mat")
         self.frameProcessor = FrameProcessor()
-        self.lockIn = LockIn(self.cap.fps(), 60.0, 0, 10000)
+        self.fps = self.cap.fps()
+        self.lockIn = LockIn(self.fps, 1.0, 0, 3000)
         self.softwarerunning = True
         self.recording = False
         self.lockInPorcentage = 0
@@ -30,9 +34,15 @@ class MainController:
         self.frame = None
         self.ret = False
         self.lockin_done = False
+        self.capturedFrameslockin = 0
         self.delay = 1/self.cap.fps()
+  
+        #self.n = 0
+        self.i = 3000
+
         self.hilo_video = threading.Thread(target=self.Capture_Frame)
         self.hilo_video.start()
+
 
     @property
     def FrameBuffer(self) -> deque: 
@@ -50,8 +60,8 @@ class MainController:
         self.__frames_buffer.append(frame)
  
     def clearFrameBuffer(self):
-
         self.__frames_buffer.clear()
+
     def update_frame(self):
         formatted_time = None
         color_mapped_splitted_frame_RGB = None
@@ -59,29 +69,35 @@ class MainController:
             if self.lockin_running:
                 buffer_ret, buffer_frame = self.FrameBuffer
                 
-                
-                    #Se realiza el procesamiento locin del frame actual
+                #Se realiza el procesamiento lockin del frame actual
                 if buffer_ret:
-                    self.lockInPorcentage, self.Thermogram_Amplitude, self.Thermogram_Phase = self.lockIn.Run_Fourier(buffer_frame)
+                    decoded_frame = self.frameProcessor.frame_decoder(buffer_frame)
+                    #decoded_frame = buffer_frame
+                    self.lockInPorcentage, self.Thermogram_Amplitude, self.Thermogram_Phase, self.Thermogram = self.lockIn.Run_Fourier(decoded_frame)
                     self.lockin_done = True
-                    if self.lockInPorcentage >= 100:
-                        self.lockin_running = False
+                    if self.lockInPorcentage == 100:
                         #Save the amplitude and phase thermograms as two .png images
+                     #   ExportData.export_as_mat(self.Thermogram, "Thermogram" + str(self.n),"./")
+                        ExportData.export_as_mat(self.Thermogram_Amplitude, "Amplitude","./")
+                        ExportData.export_as_mat(self.Thermogram_Phase, "Phase","./")             
                         Thermogram_Amplitude_N = Basics.imgNormalize(self.Thermogram_Amplitude)
                         Thermogram_Phase_N = Basics.imgNormalize(self.Thermogram_Phase)
-                        cv2.imwrite("./Phase1.png", Thermogram_Phase_N )
-                        cv2.imwrite("./Amplitude1.png",Thermogram_Amplitude_N)
+                        cv2.imwrite("./Phase"+".png", Thermogram_Phase_N )
+                        cv2.imwrite("./Amplitude"+".png",Thermogram_Amplitude_N)
+                        self.lockin_running = False
 
             #Formatea el frame segun los par'ametros seleccionados por el usuario
             self.color_mapped_frame = self.frameProcessor.setColorMap(self.frame)
-            self.color_mapped_splitted_frame = self.frameProcessor.setFrameSection(self.color_mapped_frame, "TOP")   
+            self.color_mapped_splitted_frame = self.frameProcessor.setFrameSection(self.color_mapped_frame, "TOP") 
+            #self.color_mapped_splitted_frame = self.color_mapped_frame   
             if self.recording:
                 #Guarda el frame actual
                  self.video_saver.save_frame(self.color_mapped_splitted_frame)
                  #Calcula el tiempo transcurrido
                  formatted_time = self.elapsed_time()
                 
-            color_mapped_splitted_frame_RGB = cv2.cvtColor(self.color_mapped_splitted_frame, cv2.COLOR_BGR2RGB)
+            #color_mapped_splitted_frame_RGB = cv2.cvtColor(self.color_mapped_splitted_frame, cv2.COLOR_BGR2RGB)
+            color_mapped_splitted_frame_RGB = self.color_mapped_splitted_frame
 
         return self.ret, color_mapped_splitted_frame_RGB, formatted_time, self.recording, self.lockInPorcentage,  self.lockin_running,
     
@@ -155,6 +171,7 @@ class MainController:
 
     def start_lockin(self):
         self.lockin_running = True
+        self.start_time1 = time.time()
     
     def stop_lockin(self):
         self.lockin_running = False
@@ -163,6 +180,7 @@ class MainController:
         self.lockIn.reset_lockin()
         self.lockin_done = False
         self.clearFrameBuffer()
+        self.capturedFrameslockin = 0
 
     def get_Thermogram_Amplitude(self):
         Thermogram_Amplitude_N = Basics.imgNormalize(self.Thermogram_Amplitude)
@@ -189,15 +207,51 @@ class MainController:
 
     """ SECOND THREAD: GET THE FRAMES FROM THE THERMAL DETECTOR"""
     def Capture_Frame (self):
-        while True:
-            with self.__lock:
-                self.ret, self.frame = self.cap.get_frame()
-                if self.ret and self.lockin_running:
-                    self.FrameBuffer = self.frame
-            time.sleep(self.delay)
-            if not self.softwarerunning:
-                break
+        adframes = 0
+        index = 0
+        start_time = time.time()
+        while self.softwarerunning:
+            with self.__lock:      
+                ret, encoded_frame = self.cap.get_frame()
+                #ret, encoded_frame = self.video.get_videoFrame(index)
+
+                if not ret:
+                    print("No se pudo leer el frame")
+                    break
+               
+                self.frame = self.frameProcessor.yuv2bgr_yuyv(encoded_frame)
+                self.ret = ret
+                
+                #adframes += 1
+                if(adframes == self.fps):
+                    elapsed_time = time.time() - start_time
+                    print(f"Time for {self.fps}: {elapsed_time:.2f}")
+                    adframes = 0
+                    start_time = time.time()
+                
+                if self.ret and self.lockin_running and self.capturedFrameslockin <= self.lockIn.get_FinalFrame():
+                    #color_mapped_frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
+                    self.FrameBuffer = encoded_frame
+                    self.capturedFrameslockin += 1
+                    #if(index < 2999):
+                    #    index += 1
                     
+                #time.sleep(0.01)
+
+                """ if(self.capturedFrameslockin > self.lockIn.get_FinalFrame()):
+                    # Calcula el tiempo transcurrido
+                    elapsed_time1 = time.time() - self.start_time1
+                    print(f"Time for 3000: {elapsed_time1:.2f}")"""
+                
+                """if self.ret:
+                    if self.ret and self.lockin_running and self.i<8000:
+                        # Extraer la matriz del video # La clave 'Video' puede variar según el archivo
+                        self.frame = self.video.video_frames[:, :, 0, self.i]  # Extraer el frame i
+                        self.i = self.i+1
+                        self.FrameBuffer = self.frame
+                else:
+                    self.frame = self.video.video_frames[:, :, 0, self.i]  # Extraer el frame i
+                    self.ret = 1"""
 
                     
 
