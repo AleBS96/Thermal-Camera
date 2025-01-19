@@ -1,5 +1,10 @@
 import tkinter as tk
+from tkinter import ttk
 from PIL import Image, ImageTk
+from tkinter import messagebox
+
+# Configuración del estilo
+
 
 class MainWindow:
     def __init__(self, controller):
@@ -12,7 +17,7 @@ class MainWindow:
         self.root = tk.Tk()
         self.root.title("Interfaz Táctil - Cámara Térmica")
         self.validate = self.root.register(self.validate_input)
-        self.root.attributes("-fullscreen", True)
+        #self.root.attributes("-fullscreen", True)
         self.counttime = 1000
         # Vincular el evento de cierre de la ventana al método de cierre
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -195,17 +200,17 @@ class MainWindow:
 
         #Entrada de Frecuencia frame inicial
         self.initEntry_var = tk.StringVar()                                                  # Crear una variable de control
-        self.initEntry_var.trace_add("write", self.on_initEntry_change)                      # Asociar la variable con el Entry y añadir el trace
         self.initLabel = tk.Label(self.initFrame, text="F. Inicial")
         self.initEntry = tk.Entry(self.initFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.initEntry_var, justify="right")
+        self.initEntry.bind("<FocusOut>", self.on_initEntry_change)
         self.initLabel.place(relx=0, rely=0, relwidth=1, relheight=0.5)
         self.initEntry.place(relx=0.1, rely=0.5, relwidth=0.8, relheight=0.5)
 
         #Entrada de Frecuencia frame final
         self.finEntry_var = tk.StringVar()                                                  # Crear una variable de control
-        self.finEntry_var.trace_add("write", self.on_finEntry_change)                       # Asociar la variable con el Entry y añadir el trace
         self.finLabel = tk.Label(self.finFrame, text="F. Final")
         self.finEntry = tk.Entry(self.finFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.finEntry_var, justify="right")
+        self.finEntry.bind("<FocusOut>", self.on_finEntry_change)
         self.finLabel.place(relx=0, rely=0, relwidth=1, relheight=0.5)
         self.finEntry.place(relx=0.1, rely=0.5, relwidth=0.8, relheight=0.5)
 
@@ -224,7 +229,6 @@ class MainWindow:
         # Configurar las filas del grid en el Frame information
         self.informationFrame.grid_columnconfigure(0, weight=1)
         self.informationFrame.grid_rowconfigure(0, weight=1)
-        self.informationFrame.grid_rowconfigure(1, weight=1)
 
         #PushButton para iniciar o pausar procesamiento lockin
         self.execLockinButton = tk.Button(self.executeFrame, image=self.execLockinButtonIcon, borderwidth=0, highlightthickness=0, command=self.toggle_lockinbutton)
@@ -232,16 +236,32 @@ class MainWindow:
         #PushButton para para reiniciar el procesamiento lockin
         self.resetLockinButton = tk.Button(self.executeFrame, image=self.resetLockinButtonIcon, borderwidth=0, highlightthickness=0, command=self.reset_lockin)
 
-        self.processedframesFrame = tk.Frame(self.informationFrame)  
-        self.porcentageFrame = tk.Frame(self.informationFrame) 
+        self.porcentageFrame = tk.Frame(self.informationFrame, pady=10) 
+        self.porcentageFrame.grid(row=0, column=0, sticky="nsew")
 
-        self.processedframesFrame.grid(row=0, column=0, sticky="nsew")
-        self.porcentageFrame.grid(row=1, column=0, sticky="nsew")
+        self.porcentageLabel = tk.Label(self.porcentageFrame, text="0%")
+        self.porcentageLabel.place(relx=0, rely=0.2, relwidth=1)
 
-        self.processedframesLabel = tk.Label(self.processedframesFrame, text="F.Actual: " + "0/"+ "{:.0f}".format(self.controller.lockIn.Fourier.FinalFrame)) 
-        self.processedframesLabel.place(relx=0, rely=0, relwidth=1, relheight=1)
-        self.porcentageLabel = tk.Label(self.porcentageFrame, text= "0%") 
-        self.porcentageLabel.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.progressbarstyle = ttk.Style(self.porcentageFrame)
+        self.progressbarstyle.theme_use("default")  # Usar un tema compatible
+        self.progressbarstyle.configure(
+            "Custom.Horizontal.TProgressbar",
+            thickness=15,            # Grosor de la barra
+            troughcolor="#E0E0E0",   # Color del canal (fondo)
+            borderwidth=0,            # Sin borde
+            background="#4CAF50",    # Color de la barra de progreso
+            lightcolor="#66BB6A",    # Color más claro (brillo)
+            darkcolor="#388E3C"      # Color más oscuro (sombra)
+        )
+
+        self.porcentageBar = ttk.Progressbar(
+            self.porcentageFrame, 
+            orient="horizontal", 
+            length=300, 
+            mode="determinate",
+            style="Custom.Horizontal.TProgressbar"
+        )
+        self.porcentageBar.place(relx=0.1, rely=0.5, relwidth=0.8)
 
         self.set_defautLockinparameters()
 
@@ -253,7 +273,7 @@ class MainWindow:
             #self.update_Thermogram(frame,self.realtimevideoCanvas)
             
             if self.lockinrunning and self.controller.is_lockin_done():
-                self.update_lockininformation(self.lockinporcentage, self.controller.lockIn.Fourier.CurrentFrame-1, self.controller.lockIn.Fourier.FinalFrame)
+                self.update_lockininformation(self.lockinporcentage)
                 self.update_Thermogram(self.controller.get_Thermogram_Amplitude(), self.amplitudeCanvas)
                 self.update_Thermogram(self.controller.get_Thermogram_Phase(),self.phaseCanvas)
                 if self.lockinporcentage >= 100:
@@ -323,13 +343,13 @@ class MainWindow:
         self.reset_lockininformation()
 
     def reset_lockininformation(self):      
-        self.update_lockininformation(0, 0, self.controller.lockIn.Fourier.FinalFrame)
+        self.update_lockininformation(0)
         self.resetrealtimevideoCanvas()
         self.hideSecondaryvideoframes()
 
-    def update_lockininformation(self, porcentage, PorcessedFrame, FinalFrame):
-        self.porcentageLabel.config(text="{:.0f}".format(porcentage)+"%")
-        self.processedframesLabel.config(text="F.Actual: " + str(PorcessedFrame)+"/"+ "{:.0f}".format(FinalFrame))     
+    def update_lockininformation(self, porcentage):
+        self.porcentageLabel.config(text="{:.0f}".format(porcentage)+"%")   
+        self.porcentageBar["value"]  = porcentage
 
     def run(self):
         self.root.mainloop()
@@ -372,13 +392,22 @@ class MainWindow:
     def on_modEntry_change(self, name, index, mode):
         self.controller.on_modEntry_change(float(self.modEntry_var.get()))
 
-    def on_initEntry_change(self, name, index, mode):
-        self.controller.on_initEntry_change(float(self.initEntry_var.get())-1)
+    def on_initEntry_change(self, event):
+        if self.validate_values():
+            self.controller.on_initEntry_change(float(self.initEntry_var.get())-1)
+        else:
+            self.initEntry_var.set(int(self.controller.lockIn.Fourier.InitFrame + 1))
+            messagebox.showwarning("Advertencia", "El valor del frame inicial debe ser menor que valor del frame final")
 
-    def on_finEntry_change(self, name, index, mode):
-        self.controller.on_finEntry_change(float(self.finEntry_var.get()))
-        self.update_lockininformation(self.lockinporcentage, self.controller.lockIn.Fourier.CurrentFrame, self.controller.lockIn.Fourier.FinalFrame)
+    def on_finEntry_change(self, event):
+        if self.validate_values():
+            self.controller.on_finEntry_change(float(self.finEntry_var.get()))
+            self.update_lockininformation(self.lockinporcentage)
+        else:
+            self.finEntry_var.set(int(self.controller.lockIn.Fourier.FinalFrame))
+            messagebox.showwarning("Advertencia", "El valor del frame final debe ser menor que valor del frame inicial")
 
+        
     def showSecondaryvideoframes(self):
         self.frames[1].place(relx=0.80, rely=0.60, relwidth=0.2, relheight=0.2)  # Pequeño 1
         self.frames[2].place(relx=0.80, rely=0.80, relwidth=0.2, relheight=0.2)  # Pequeño 2
@@ -446,6 +475,20 @@ class MainWindow:
         """                        
         return text.isdigit() and (len(text) <= 7) and int(text) > 0  # Permite solo dígitos o vacío. 
     
+    def validate_values(self):
+        """
+        Returns False if the start frame is greater
+        than or equal to the end frame. In case of 
+        return of the contract True
+        """
+        # Obtener los valores de las entradas de texto
+        finframe = float(self.finEntry.get())
+        initframe = float(self.initEntry.get())
+        # Validar que valor1 sea menor que valor2
+        if (initframe >= finframe):
+            return False
+        else:
+            return True
 
 
 
@@ -453,5 +496,5 @@ class MainWindow:
 
 
 
-       
         
+            

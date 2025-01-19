@@ -47,14 +47,12 @@ class LockIn ():
         return  self.Fourier.FrameRate
     
     @InitFrame.setter
-    def InitFrame(self, initframe):
-        if (self.vaidate_frames_multoffps(initframe, self.FinFrame, self.FPS)):
-            self.Fourier.InitFrame = initframe
+    def InitFrame(self, initframe):      
+        self.Fourier.InitFrame = initframe
 
     @FinFrame.setter
     def FinFrame(self, finframe):
-        if (self.vaidate_frames_multoffps(self.InitFrame,finframe, self.FPS)):
-            self.Fourier.FinalFrame = finframe
+        self.Fourier.FinalFrame = finframe
 
     @Modulation.setter
     def Modulation(self, modulation):
@@ -62,13 +60,11 @@ class LockIn ():
 
     @FPS.setter
     def FrameRate(self, fps):
-        if (self.vaidate_frames_multoffps(self.InitFrame,self.FinFrame, fps)):
-            self.Fourier.FrameRate = fps
+        self.Fourier.FrameRate = fps
         
     #  Execute the Fourier Method
     def Run_Fourier(self, img):
         self.__fourier.Thermogram = img
-
         return  self.__fourier.Porcentage, self.Thermogram_Amplitude, self.Thermogram_Phase, self.__fourier.Thermogram
     
     def get_FinalFrame(self):
@@ -76,12 +72,5 @@ class LockIn ():
     
     def reset_lockin(self):
         self.Fourier.reset_fourier()
-
-    def vaidate_frames_multoffps(self,initframe, finframe, FPS):
-        if((finframe - initframe)%FPS) == 0:
-           return True
-        else:
-            raise Exception("La cantidad de frames a procesar debe ser múltiplo de la tasa de frames")
-            return False
 
 

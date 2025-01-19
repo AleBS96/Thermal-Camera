@@ -32,7 +32,7 @@ class Fourier:
     #FbP         = lambda _, modulation , framerate : (1/modulation) / (1/framerate)     # Frames by Lock-in Period
     WFactor     = lambda _, N : cmath.exp(-1j*2*cmath.pi/N)
     cp          = lambda _, F , N : int(F / N) + 1                                      # Current lock-in period value
-    rangeFrame  = lambda _, f, i : f - i                                                # Number of total frames to be process
+    rangeFrame  = lambda _, f, i, framerate : (f - i) - ((f - i)%framerate)                                         # Number of total frames to be process
     vop         = lambda _, frames, current:((current * 100)) / frames              # Value  of  progress
    
 
@@ -74,7 +74,8 @@ class Fourier:
     @FrameRate.setter
     def FrameRate(self, value:int):             # Sets the Frame Rate Value,  you must update the same values in Modulation property
         self.__Frame_Rate       = value
-        #self.__FramesByPeriod   = self.FbP(self.Modulation,self.FrameRate)
+        self.__Frames           = self.rangeFrame(self.FinalFrame,self.InitFrame,value)
+        print(self.Frames)
         self.__K                = self.KFactor(self.N, self.Modulation, self.FrameRate)
 
     # Total Frames to be Processed propeties
@@ -93,10 +94,11 @@ class Fourier:
   
     @InitFrame.setter                           # Sets the number of initial's frame of the video to be processed
     def InitFrame(self, value:int):
-        self.__init_frame = value
-        self.__Frames           = self.rangeFrame(self.FinalFrame,self.InitFrame)
-        self.__K                = self.KFactor(self.N, self.Modulation, self.FrameRate)
-        self.__W                = self.WFactor(self.N)
+        self.__init_frame   = value
+        self.__Frames       = self.rangeFrame(self.FinalFrame,value,self.FrameRate)
+        print(self.Frames)
+        self.__K            = self.KFactor(self.N, self.Modulation, self.FrameRate)
+        self.__W            = self.WFactor(self.N)
 
     # Properties related with the final's frame of the video that will be processed
     @property                                   # Gets the number of final's frame of the video that will be process
@@ -106,7 +108,8 @@ class Fourier:
     @FinalFrame.setter                          # Sets the number of final's frame of the video that will be process
     def FinalFrame(self, value:int):
         self.__final_frame      = value
-        self.__Frames           = self.rangeFrame(self.FinalFrame,self.InitFrame)
+        self.__Frames           = self.rangeFrame(value,self.InitFrame,self.FrameRate)
+        print(self.Frames)
         self.__K                = self.KFactor(self.N, self.Modulation, self.FrameRate)
         self.__W                = self.WFactor(self.N)
 
@@ -118,7 +121,6 @@ class Fourier:
     @Modulation.setter                          # Sets the modulation's frequency of the reference's signal
     def Modulation(self, value: float):
         self.__modulation       = value
-        #self.__FramesByPeriod   = self.FbP(self.Modulation,self.FrameRate)
         self.__K                = self.KFactor(self.N,self.Modulation,self.FrameRate)
 
     # Properties related with the k's Factor used byy this Method 

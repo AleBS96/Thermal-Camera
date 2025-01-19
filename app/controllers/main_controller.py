@@ -67,21 +67,20 @@ class MainController:
         color_mapped_splitted_frame_RGB = None
         if self.ret == True:
             if self.lockin_running:
-                buffer_ret, buffer_frame = self.FrameBuffer
+                buffer_ret, buffer_frame = self.FrameBuffer                
                 
                 #Se realiza el procesamiento lockin del frame actual
                 if buffer_ret:
                     decoded_frame = self.frameProcessor.frame_decoder(buffer_frame)
-                    #decoded_frame = buffer_frame
                     self.lockInPorcentage, self.Thermogram_Amplitude, self.Thermogram_Phase, self.Thermogram = self.lockIn.Run_Fourier(decoded_frame)
                     self.lockin_done = True
+                    
                     if self.lockInPorcentage == 100:
-                        #Save the amplitude and phase thermograms as two .png images
-                     #   ExportData.export_as_mat(self.Thermogram, "Thermogram" + str(self.n),"./")
                         ExportData.export_as_mat(self.Thermogram_Amplitude, "Amplitude","./")
-                        ExportData.export_as_mat(self.Thermogram_Phase, "Phase","./")             
+                        ExportData.export_as_mat(self.Thermogram_Phase, "Phase","./")           
                         Thermogram_Amplitude_N = Basics.imgNormalize(self.Thermogram_Amplitude)
                         Thermogram_Phase_N = Basics.imgNormalize(self.Thermogram_Phase)
+                        #Save the amplitude and phase thermograms as two .png images 
                         cv2.imwrite("./Phase"+".png", Thermogram_Phase_N )
                         cv2.imwrite("./Amplitude"+".png",Thermogram_Amplitude_N)
                         self.lockin_running = False
