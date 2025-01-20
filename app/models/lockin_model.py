@@ -46,6 +46,14 @@ class LockIn ():
     def FPS(self) -> int:
         return  self.Fourier.FrameRate
     
+    @property
+    def CurrentFrame(self) -> int:
+        return  self.Fourier.CurrentFrame
+    
+    @CurrentFrame.getter
+    def CurrentFrame(self) -> int:
+        return self.Fourier.CurrentFrame + 1
+    
     @InitFrame.setter
     def InitFrame(self, initframe):      
         self.Fourier.InitFrame = initframe

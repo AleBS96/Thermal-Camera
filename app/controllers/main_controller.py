@@ -13,7 +13,6 @@ from app.models.mediasaver_model import ImageSaver
 from app.models.frameprocessor import FrameProcessor
 from app.models.lockin_model import LockIn
 from app.models.exportData_model import ExportData
-
 from app.models.media import Video
 
 class MainController:
@@ -88,15 +87,13 @@ class MainController:
             #Formatea el frame segun los par'ametros seleccionados por el usuario
             self.color_mapped_frame = self.frameProcessor.setColorMap(self.frame)
             self.color_mapped_splitted_frame = self.frameProcessor.setFrameSection(self.color_mapped_frame, "TOP") 
-            #self.color_mapped_splitted_frame = self.color_mapped_frame   
             if self.recording:
                 #Guarda el frame actual
                  self.video_saver.save_frame(self.color_mapped_splitted_frame)
                  #Calcula el tiempo transcurrido
                  formatted_time = self.elapsed_time()
                 
-            #color_mapped_splitted_frame_RGB = cv2.cvtColor(self.color_mapped_splitted_frame, cv2.COLOR_BGR2RGB)
-            color_mapped_splitted_frame_RGB = self.color_mapped_splitted_frame
+            color_mapped_splitted_frame_RGB = cv2.cvtColor(self.color_mapped_splitted_frame, cv2.COLOR_BGR2RGB)
 
         return self.ret, color_mapped_splitted_frame_RGB, formatted_time, self.recording, self.lockInPorcentage,  self.lockin_running,
     

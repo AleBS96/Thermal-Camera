@@ -1,10 +1,13 @@
 import tkinter as tk
 from tkinter import ttk
+from app.utils.style import Style
 from PIL import Image, ImageTk
 from tkinter import messagebox
 
 # Configuración del estilo
 
+BACKGROUND_COLOR = "#3b4344"
+ENTRYBACKGROUND_COLOR = "#3b4340"
 
 class MainWindow:
     def __init__(self, controller):
@@ -21,6 +24,7 @@ class MainWindow:
         self.counttime = 1000
         # Vincular el evento de cierre de la ventana al método de cierre
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.styles = Style(self.root)
         self.createWidgets()
 
     def createWidgets(self):
@@ -32,9 +36,9 @@ class MainWindow:
         self.recordButtonIcon = self.load_icon("app/assets/capture/iniciargrabacion.png", self.colormapIcon_height + 5,self.colormapIcon_width + 5)
         self.stoprecordButtonIcon = self.load_icon("app/assets/capture/detenergrabacion.png", self.colormapIcon_height + 5,self.colormapIcon_width + 5)
         self.shotButtonIcon = self.load_icon("app/assets/capture/capturaimagen.png", self.colormapIcon_height,self.colormapIcon_width)
-        self.execLockinButtonIcon = self.load_icon("app/assets/lockin/executelockin.png", self.colormapIcon_height - 30,self.colormapIcon_width - 30)
-        self.stopLockinButtonIcon = self.load_icon("app/assets/lockin/stoplockin.png", self.colormapIcon_height - 30,self.colormapIcon_width - 30)
-        self.resetLockinButtonIcon = self.load_icon("app/assets/lockin/resetlockin.png", self.colormapIcon_height - 25,self.colormapIcon_width - 25)
+        self.execLockinButtonIcon = self.load_icon("app/assets/lockin/executelockin.png", self.colormapIcon_height - 20,self.colormapIcon_width - 20)
+        self.stopLockinButtonIcon = self.load_icon("app/assets/lockin/stoplockin.png", self.colormapIcon_height - 20,self.colormapIcon_width - 20)
+        self.resetLockinButtonIcon = self.load_icon("app/assets/lockin/resetlockin.png", self.colormapIcon_height - 15,self.colormapIcon_width - 15)
         
 
         # Cargar imágenes de los mapas de colores
@@ -48,7 +52,7 @@ class MainWindow:
        
     
         # Crear marco principal
-        self.mainFrame = tk.Frame(self.root, bg="white")
+        self.mainFrame = ttk.Frame(self.root)
         self.mainFrame.pack(fill="both", expand=True)
 
         # Configurar las columnas del grid en el Frame principal
@@ -58,9 +62,9 @@ class MainWindow:
         self.mainFrame.grid_rowconfigure(0, weight=1)     # Fila única
  
         # Crear marcos de segundo nivel
-        self.optionsFrame = tk.Frame(self.mainFrame, width=30)  # Marco de opciones
-        self.cameraFrame = tk.Frame(self.mainFrame)    # Marco para visualizar video la Cámara
-        self.toolsFrame = tk.Frame(self.mainFrame)  # Crear marco de parámetros
+        self.optionsFrame = ttk.Frame(self.mainFrame,style="Modern.TFrame", width=30)  # Marco de opciones
+        self.cameraFrame = ttk.Frame(self.mainFrame,style="Modern.TFrame")    # Marco para visualizar video la Cámara
+        self.toolsFrame = ttk.Frame(self.mainFrame,style="Modern.TFrame")  # Crear marco de parámetros
 
         # Colocando los marcos en el grid
         self.optionsFrame.grid(row=0, column=0, sticky="nsew")
@@ -75,10 +79,10 @@ class MainWindow:
         self.optionsFrame.grid_columnconfigure(0, weight=1)
 
         # Crear los subframes dentro del frame opciones
-        self.captureFrame = tk.Frame(self.optionsFrame)
-        self.shutdownFrame = tk.Frame(self.optionsFrame)
-        self.fileFrame = tk.Frame(self.optionsFrame)
-        self.colormapFrame = tk.Frame(self.optionsFrame)
+        self.captureFrame = ttk.Frame(self.optionsFrame,style="Modern.TFrame")
+        self.shutdownFrame = ttk.Frame(self.optionsFrame,style="Modern.TFrame")
+        self.fileFrame = ttk.Frame(self.optionsFrame,style="Modern.TFrame")
+        self.colormapFrame = ttk.Frame(self.optionsFrame,style="Modern.TFrame")
 
         # Colocando los los subframes dentro del frame opcions
         self.shutdownFrame.grid(row=0, column=0, sticky="nsew")
@@ -87,21 +91,21 @@ class MainWindow:
         self.colormapFrame.grid(row=3, column=0, sticky="nsew")
 
         # Creando el botón de apagado
-        self.shutdownButton = tk.Button(self.shutdownFrame, image=self.shutdownIcon, borderwidth=0, highlightthickness=0, command=self.controller.shutdown_system)
+        self.shutdownButton = ttk.Button(self.shutdownFrame, image=self.shutdownIcon,style="Modern.TButton",command=self.controller.shutdown_system)
         self.shutdownButton.place(relx=0, rely=0, relwidth=1, relheight=1)
         
         # Creando los botones para gestion de archivos
-        self.loadButton = tk.Button(self.fileFrame, image = self.loadButtonIcon, borderwidth=0, highlightthickness=0, command=self.load_image)
+        self.loadButton = ttk.Button(self.fileFrame, image = self.loadButtonIcon,style="Modern.TButton", command=self.load_image, takefocus=True)
         self.loadButton.place(relx=0, rely=0, relwidth=1, relheight=1)
         
         # Creando los botones de captura de frames
-        self.recordButton = tk.Button(self.captureFrame, image=self.recordButtonIcon , borderwidth=0, highlightthickness=0, command=self.toggle_recording)
-        self.shotButton = tk.Button(self.captureFrame, image=self.shotButtonIcon, borderwidth=0, highlightthickness=0, command=self.capture_image, pady=10)
+        self.recordButton = ttk.Button(self.captureFrame, image=self.recordButtonIcon ,style="Modern.TButton", command=self.toggle_recording, takefocus=True)
+        self.shotButton = ttk.Button(self.captureFrame, image=self.shotButtonIcon, style="Modern.TButton", command=self.capture_image, takefocus=True)
         self.recordButton.place(relx=0, rely=0, relwidth=1, relheight=0.5)
         self.shotButton.place(relx=0, rely=0.5, relwidth=1, relheight=0.5)
 
         # Crear un Menubutton para el menú con imagen y sin texto
-        self.menubutton = tk.Menubutton(self.colormapFrame, relief="raised", borderwidth=0)
+        self.menubutton = ttk.Menubutton(self.colormapFrame,style="ModernMenu.TButton",takefocus=True)
         self.menubutton.place(relx=0, rely=0, relwidth=1, relheight=1)
 
         # Crear un Menu desplegable
@@ -119,9 +123,9 @@ class MainWindow:
 
          # Crear los tres marcos de video
         self.frames = [
-            tk.Frame(self.cameraFrame),
-            tk.Frame(self.cameraFrame, bg = "blue"),
-            tk.Frame(self.cameraFrame, bg = "green")
+            ttk.Frame(self.cameraFrame,style="Modern.TFrame"),
+            ttk.Frame(self.cameraFrame,style="Modern.TFrame"),
+            ttk.Frame(self.cameraFrame,style="Modern.TFrame")
         ]
 
         #Posiciona el frame del video principal
@@ -141,24 +145,27 @@ class MainWindow:
         self.notification = self.realtimevideoCanvas.create_text(30, 10, anchor=tk.NW, text='', fill="black", font=("Helvetica", 24))
 
         # Configurar las filas del grid en el Frame toolFrames
-        self.toolsFrame.grid_rowconfigure(0, weight=2)  # Fila Superior
-        self.toolsFrame.grid_rowconfigure(1, weight=3)  # Fila inferior
+        self.toolsFrame.grid_rowconfigure(0, weight=70)  # Fila Superior
+        self.toolsFrame.grid_rowconfigure(1, weight=1)  # Fila inferior
+        self.toolsFrame.grid_rowconfigure(2, weight=70)  # Fila inferior
         self.toolsFrame.grid_columnconfigure(0, weight=1)
 
-        self.lockinFrame = tk.Frame(self.toolsFrame, background="red")
-        self.analysisFrame = tk.Frame(self.toolsFrame, background="blue")
+        self.lockinFrame = ttk.Frame(self.toolsFrame,style="Modern.TFrame")
+        self.toolsSeparador = ttk.Separator(self.toolsFrame,style="Modern.TSeparator")
+        self.analysisFrame = ttk.Frame(self.toolsFrame,style="Modern.TFrame")
 
         # Colocando los los subframes dentro del frame toolFrams
         self.lockinFrame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
-        self.analysisFrame.grid(row=1, column=0, sticky="nsew")
+        self.toolsSeparador.grid(row=1, column=0,padx=10, pady=10, sticky="nsew")
+        self.analysisFrame.grid(row=2, column=0, sticky="nsew")
 
         # Configurar las filas del grid en el Frame lockinFrames
         self.lockinFrame.grid_rowconfigure(0, weight=10)
-        self.lockinFrame.grid_rowconfigure(1, weight=4)
+        self.lockinFrame.grid_rowconfigure(1, weight=5)
         self.lockinFrame.grid_columnconfigure(0, weight=1)
 
-        self.paramFrame = tk.Frame(self.lockinFrame)
-        self.executionFrame = tk.Frame(self.lockinFrame)
+        self.paramFrame = ttk.Frame(self.lockinFrame,style="Modern.TFrame")
+        self.executionFrame = ttk.Frame(self.lockinFrame,style="Modern.TFrame")
 
         # Colocando los los subframes dentro del frame toolFrams
         self.paramFrame.grid(row=0, column=0, sticky="nsew")
@@ -171,97 +178,93 @@ class MainWindow:
         self.paramFrame.grid_rowconfigure(1, weight=1)
 
         # Crear marcos de segundo nivel
-        self.frFrame = tk.Frame(self.paramFrame)        # Marco de ingresar parámetro framerate
-        self.modFrame = tk.Frame(self.paramFrame)       # Marco de ingresar parámetro modulación
-        self.initFrame = tk.Frame(self.paramFrame)      # Marco de ingresar parámetro frame inicial
-        self.finFrame = tk.Frame(self.paramFrame)       # Marco de ingresar parámetro frame final
+        self.frFrame = ttk.Frame(self.paramFrame,style="Modern.TFrame")        # Marco de ingresar parámetro framerate
+        self.modFrame = ttk.Frame(self.paramFrame,style="Modern.TFrame" )      # Marco de ingresar parámetro modulación
+        self.initFrame = ttk.Frame(self.paramFrame,style="Modern.TFrame" )      # Marco de ingresar parámetro frame inicial
+        self.finFrame = ttk.Frame(self.paramFrame,style="Modern.TFrame" )       # Marco de ingresar parámetro frame final
 
         self.frFrame.grid(row=0, column=0, sticky="nsew")
         self.modFrame.grid(row=1, column=0, sticky="nsew")
         self.initFrame.grid(row=0, column=1, sticky="nsew")
         self.finFrame.grid(row=1, column=1, sticky="nsew")
 
-        
         #Entrada de FrameRate
         self.frEntry_var = tk.StringVar()                                                   # Crear una variable de control
         self.frEntry_var.trace_add("write", self.on_frEntry_change)                         # Asociar la variable con el Entry y añadir el trace
-        self.frLabel = tk.Label(self.frFrame, text="FPS")
-        self.frEntry = tk.Entry(self.frFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.frEntry_var, justify="right")
-        self.frLabel.place(relx=0, rely=0, relwidth=1, relheight=0.5)
+        self.frLabel = ttk.Label(self.frFrame,style="Modern.TLabel",justify="right", text="FPS")
+        self.frEntry = ttk.Entry(self.frFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.frEntry_var, justify="right",style="Modern.TEntry")
+        self.frLabel.place(relx=0.1, rely=0, relwidth=1, relheight=0.5)
         self.frEntry.place(relx=0.1, rely=0.5, relwidth=0.8, relheight=0.5)
 
         #Entrada de Frecuencia de modulacion
         self.modEntry_var = tk.StringVar()                                                   # Crear una variable de control
         self.modEntry_var.trace_add("write", self.on_modEntry_change)                        # Asociar la variable con el Entry y añadir el trace
-        self.modLabel = tk.Label(self.modFrame, text="F. Mod (Hz)")
-        self.modEntry = tk.Entry(self.modFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.modEntry_var, justify="right")
-        self.modLabel.place(relx=0, rely=0, relwidth=1, relheight=0.5)
+        self.modLabel = ttk.Label(self.modFrame,style="Modern.TLabel",justify="center", text="F. Mod (Hz)")
+        self.modEntry = ttk.Entry(self.modFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.modEntry_var, justify="right",style="Modern.TEntry")
+        self.modLabel.place(relx=0.1, rely=0, relwidth=1, relheight=0.5)
         self.modEntry.place(relx=0.1, rely=0.5, relwidth=0.8, relheight=0.5)
 
         #Entrada de Frecuencia frame inicial
         self.initEntry_var = tk.StringVar()                                                  # Crear una variable de control
-        self.initLabel = tk.Label(self.initFrame, text="F. Inicial")
-        self.initEntry = tk.Entry(self.initFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.initEntry_var, justify="right")
+        self.initLabel = ttk.Label(self.initFrame,style="Modern.TLabel",justify="center", text="F. Inicial")
+        self.initEntry = ttk.Entry(self.initFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.initEntry_var,font=("Arial",10), justify="right",style="Modern.TEntry")
         self.initEntry.bind("<FocusOut>", self.on_initEntry_change)
-        self.initLabel.place(relx=0, rely=0, relwidth=1, relheight=0.5)
+        self.initEntry.bind("<Return>", self.on_initEntry_change)
+        self.initLabel.place(relx=0.1, rely=0, relwidth=1, relheight=0.5)
         self.initEntry.place(relx=0.1, rely=0.5, relwidth=0.8, relheight=0.5)
 
         #Entrada de Frecuencia frame final
         self.finEntry_var = tk.StringVar()                                                  # Crear una variable de control
-        self.finLabel = tk.Label(self.finFrame, text="F. Final")
-        self.finEntry = tk.Entry(self.finFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.finEntry_var, justify="right")
+        self.finLabel = ttk.Label(self.finFrame,style="Modern.TLabel",justify="center", text="F. Final")
+        self.finEntry = ttk.Entry(
+            self.finFrame,
+            validate="key", 
+            validatecommand=(self.validate, "%P"), 
+            textvariable=self.finEntry_var,
+            justify="right", 
+            style="Modern.TEntry"
+            )
         self.finEntry.bind("<FocusOut>", self.on_finEntry_change)
-        self.finLabel.place(relx=0, rely=0, relwidth=1, relheight=0.5)
+        self.finEntry.bind("<Return>", self.on_finEntry_change)
+        self.finLabel.place(relx=0.1, rely=0, relwidth=1, relheight=0.5)
         self.finEntry.place(relx=0.1, rely=0.5, relwidth=0.8, relheight=0.5)
 
-        # Configurar las filas del grid en el Frame lockinFrames
-        self.executionFrame.grid_columnconfigure(0, weight=1)
-        self.executionFrame.grid_columnconfigure(1, weight=1)
+        # Configurar las filas del grid en el Frame executionFrame
+        self.executionFrame.grid_columnconfigure(0, weight=2)
         self.executionFrame.grid_rowconfigure(0, weight=1)
+        self.executionFrame.grid_rowconfigure(1, weight=1)
 
         # Crear marcos de segundo nivel
-        self.executeFrame = tk.Frame(self.executionFrame)  
-        self.informationFrame = tk.Frame(self.executionFrame)
+        self.executeFrame = ttk.Frame(self.executionFrame,style="Modern.TFrame" )  
+        self.informationFrame = ttk.Frame(self.executionFrame,style="Modern.TFrame" )
 
         self.executeFrame.grid(row=0, column=0, sticky="nsew")
-        self.informationFrame.grid(row=0, column=1, sticky="nsew") 
+        self.informationFrame.grid(row=1, column=0, sticky="nsew") 
 
         # Configurar las filas del grid en el Frame information
         self.informationFrame.grid_columnconfigure(0, weight=1)
         self.informationFrame.grid_rowconfigure(0, weight=1)
 
         #PushButton para iniciar o pausar procesamiento lockin
-        self.execLockinButton = tk.Button(self.executeFrame, image=self.execLockinButtonIcon, borderwidth=0, highlightthickness=0, command=self.toggle_lockinbutton)
-        self.execLockinButton.place(relx=0, rely=0.15, relwidth=0.4, relheight=0.75)
+        self.execLockinButton = tk.Button(self.executeFrame, image=self.execLockinButtonIcon,borderwidth=0, background="#FFFFFF", command=self.toggle_lockinbutton)
+        self.execLockinButton.place(relx=0.1, rely=0.1, relwidth=0.25, relheight=1)
         #PushButton para para reiniciar el procesamiento lockin
-        self.resetLockinButton = tk.Button(self.executeFrame, image=self.resetLockinButtonIcon, borderwidth=0, highlightthickness=0, command=self.reset_lockin)
+        self.resetLockinButton = tk.Button(self.executeFrame, image=self.resetLockinButtonIcon, borderwidth=0, background="#FFFFFF", command=self.reset_lockin)
 
-        self.porcentageFrame = tk.Frame(self.informationFrame, pady=10) 
+        self.porcentageFrame = ttk.Frame(self.informationFrame,style="Modern.TFrame" ) 
         self.porcentageFrame.grid(row=0, column=0, sticky="nsew")
 
-        self.porcentageLabel = tk.Label(self.porcentageFrame, text="0%")
-        self.porcentageLabel.place(relx=0, rely=0.2, relwidth=1)
-
-        self.progressbarstyle = ttk.Style(self.porcentageFrame)
-        self.progressbarstyle.theme_use("default")  # Usar un tema compatible
-        self.progressbarstyle.configure(
-            "Custom.Horizontal.TProgressbar",
-            thickness=15,            # Grosor de la barra
-            troughcolor="#E0E0E0",   # Color del canal (fondo)
-            borderwidth=0,            # Sin borde
-            background="#4CAF50",    # Color de la barra de progreso
-            lightcolor="#66BB6A",    # Color más claro (brillo)
-            darkcolor="#388E3C"      # Color más oscuro (sombra)
-        )
+        self.porcentageLabel = ttk.Label(self.porcentageFrame,style="ModernPercent.TLabel",justify="center", text="0%")
+        self.porcentageLabel.place(relx=0.1, rely=0.2, relwidth=1)
 
         self.porcentageBar = ttk.Progressbar(
             self.porcentageFrame, 
             orient="horizontal", 
             length=300, 
             mode="determinate",
-            style="Custom.Horizontal.TProgressbar"
+            style="Modern.Horizontal.TProgressbar"
         )
-        self.porcentageBar.place(relx=0.1, rely=0.5, relwidth=0.8)
+        self.porcentageBar.place(relx=0.1, rely=0.6,relheight=0.4, relwidth=0.8)
 
         self.set_defautLockinparameters()
 
@@ -270,15 +273,16 @@ class MainWindow:
     def update_frame(self):
         ret,frame,elapsedtime,self.time_visible, self.lockinporcentage, lockinrunning = self.controller.update_frame()
         if ret == True:
-            #self.update_Thermogram(frame,self.realtimevideoCanvas)
-            
             if self.lockinrunning and self.controller.is_lockin_done():
                 self.update_lockininformation(self.lockinporcentage)
-                self.update_Thermogram(self.controller.get_Thermogram_Amplitude(), self.amplitudeCanvas)
-                self.update_Thermogram(self.controller.get_Thermogram_Phase(),self.phaseCanvas)
+                if(self.controller.lockIn.CurrentFrame % float(self.frEntry.get()) == 0):
+                    self.update_Thermogram(self.controller.get_Thermogram_Amplitude(), self.amplitudeCanvas)
+                    self.update_Thermogram(self.controller.get_Thermogram_Phase(),self.phaseCanvas)
                 if self.lockinporcentage >= 100:
                     self.lockinrunning = False
                     self.update_lockinsection()
+            else:
+                self.update_Thermogram(frame,self.realtimevideoCanvas)
 
             if self.time_visible == True:
                 # Actualizar el tiempo en el canvas
@@ -317,14 +321,16 @@ class MainWindow:
 
     #Se encarga de actuaizar el estado el botón Lockin y del proceso Lockin
     def toggle_lockinbutton(self):
-        if not self.lockinrunning:
-            # Inicia del procesamiento lock in
-            self.lockinrunning = True
-        else:
-            # Detiene el procesamiento lockin
-            self.lockinrunning = False  
-
-        self.update_lockinsection()  
+        if(self.validate_values() and self.validate_final_value()):
+            if not self.lockinrunning:
+                # Inicia del procesamiento lock in
+                self.lockinrunning = True
+                self.change_framestate("disabled")       
+            else:
+                # Detiene el procesamiento lockin
+                self.lockinrunning = False  
+            self.update_lockinsection() 
+        self.execLockinButton.focus_force()   
     
     def update_lockinsection(self):
         if self.lockinrunning:
@@ -334,12 +340,13 @@ class MainWindow:
             self.controller.start_lockin()
         else:
             self.execLockinButton.config(image=self.execLockinButtonIcon)
-            self.resetLockinButton.place(relx=0.4, rely=0.15, relwidth=0.4, relheight=0.75)
+            self.resetLockinButton.place(relx=0.35, rely=0.1, relwidth=0.25, relheight=1)
             self.controller.stop_lockin()    
 
     def reset_lockin(self):
         self.resetLockinButton.place_forget()
         self.controller.reset_Lockin()
+        self.change_framestate("normal")
         self.reset_lockininformation()
 
     def reset_lockininformation(self):      
@@ -396,18 +403,20 @@ class MainWindow:
         if self.validate_values():
             self.controller.on_initEntry_change(float(self.initEntry_var.get())-1)
         else:
-            self.initEntry_var.set(int(self.controller.lockIn.Fourier.InitFrame + 1))
             messagebox.showwarning("Advertencia", "El valor del frame inicial debe ser menor que valor del frame final")
-
+            self.initEntry_var.set(int(self.controller.lockIn.Fourier.InitFrame + 1))
+           
     def on_finEntry_change(self, event):
-        if self.validate_values():
+        if not self.validate_values():
+            messagebox.showwarning("Advertencia", "El valor del frame final debe ser mayor que el valor del frame inicial")
+            self.finEntry_var.set(int(self.controller.lockIn.Fourier.FinalFrame))
+        elif(not self.validate_final_value()):
+            messagebox.showwarning("Advertencia", "El valor del frame final debe ser igual o mayor que el valor del framerate")
+            self.finEntry_var.set(int(self.controller.lockIn.Fourier.FinalFrame))     
+        else:
             self.controller.on_finEntry_change(float(self.finEntry_var.get()))
             self.update_lockininformation(self.lockinporcentage)
-        else:
-            self.finEntry_var.set(int(self.controller.lockIn.Fourier.FinalFrame))
-            messagebox.showwarning("Advertencia", "El valor del frame final debe ser menor que valor del frame inicial")
-
-        
+            
     def showSecondaryvideoframes(self):
         self.frames[1].place(relx=0.80, rely=0.60, relwidth=0.2, relheight=0.2)  # Pequeño 1
         self.frames[2].place(relx=0.80, rely=0.80, relwidth=0.2, relheight=0.2)  # Pequeño 2
@@ -489,8 +498,31 @@ class MainWindow:
             return False
         else:
             return True
+        
+    def validate_final_value(self):
+        """
+         Returns False if the final frame is less
+        than the framerate. In case of 
+        return of the contract True
+        """
+        # Obtener los valores de las entradas de texto
+        finframe = float(self.finEntry.get())
+        framerate = float(self.frEntry.get())
+        # Validar que valor1 sea menor que valor2
+        if (finframe < framerate):
+            return False
+        else:
+            return True
+        
+    def change_framestate(self, currentState):
+        # cambiar estado todos los widgets dentro del Frame parametros del lock in
+        for widget in self.paramFrame.winfo_children():
+            widget.winfo_children()[1].configure(state=currentState)
 
-
+        for child_frame in self.optionsFrame.winfo_children():
+            for widget in child_frame.winfo_children():
+                widget.configure(state=currentState)
+        
 
 
 

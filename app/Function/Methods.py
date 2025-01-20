@@ -10,7 +10,6 @@ class Fourier:
     __final_frame       = int                   # Represents the number of the final's frame of the video that will be process
     __modulation        = float                 # Represents the modulation's frequency of the reference signal                 (fe)
     __K                 = float                 # Represents the K's factor, defined by this Method like                        [N(fe/fs)+1]
-    #__FramesByPeriod    = int                   # Represents the N's factor, it is knowed like frames by lock-in periods        (N)
     __currentFrame      = int                   # Represents the current frame in the range of frames to be process
     __porcentage        = int                   # Represents the progress's porcentage of the process compute   
     __last_image_Frame  = []                    # Represents the last image loader by openCV
@@ -75,7 +74,6 @@ class Fourier:
     def FrameRate(self, value:int):             # Sets the Frame Rate Value,  you must update the same values in Modulation property
         self.__Frame_Rate       = value
         self.__Frames           = self.rangeFrame(self.FinalFrame,self.InitFrame,value)
-        print(self.Frames)
         self.__K                = self.KFactor(self.N, self.Modulation, self.FrameRate)
 
     # Total Frames to be Processed propeties
@@ -96,7 +94,6 @@ class Fourier:
     def InitFrame(self, value:int):
         self.__init_frame   = value
         self.__Frames       = self.rangeFrame(self.FinalFrame,value,self.FrameRate)
-        print(self.Frames)
         self.__K            = self.KFactor(self.N, self.Modulation, self.FrameRate)
         self.__W            = self.WFactor(self.N)
 
@@ -109,7 +106,6 @@ class Fourier:
     def FinalFrame(self, value:int):
         self.__final_frame      = value
         self.__Frames           = self.rangeFrame(value,self.InitFrame,self.FrameRate)
-        print(self.Frames)
         self.__K                = self.KFactor(self.N, self.Modulation, self.FrameRate)
         self.__W                = self.WFactor(self.N)
 
