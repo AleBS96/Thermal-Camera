@@ -275,7 +275,7 @@ class MainWindow:
         if ret == True:
             if self.lockinrunning and self.controller.is_lockin_done():
                 self.update_lockininformation(self.lockinporcentage)
-                if(self.controller.lockIn.CurrentFrame % float(self.frEntry.get()) == 0):
+                if((self.controller.lockIn.CurrentFrame - 2) % float(self.frEntry.get()) == 0):
                     self.update_Thermogram(self.controller.get_Thermogram_Amplitude(), self.amplitudeCanvas)
                     self.update_Thermogram(self.controller.get_Thermogram_Phase(),self.phaseCanvas)
                 if self.lockinporcentage >= 100:

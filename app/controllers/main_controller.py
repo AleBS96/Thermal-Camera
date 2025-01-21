@@ -63,6 +63,7 @@ class MainController:
 
     def update_frame(self):
         formatted_time = None
+        b = self.lockIn.CurrentFrame
         color_mapped_splitted_frame_RGB = None
         if self.ret == True:
             if self.lockin_running:
@@ -73,7 +74,7 @@ class MainController:
                     decoded_frame = self.frameProcessor.frame_decoder(buffer_frame)
                     self.lockInPorcentage, self.Thermogram_Amplitude, self.Thermogram_Phase, self.Thermogram = self.lockIn.Run_Fourier(decoded_frame)
                     self.lockin_done = True
-                    
+                    a = self.lockIn.CurrentFrame
                     if self.lockInPorcentage == 100:
                         ExportData.export_as_mat(self.Thermogram_Amplitude, "Amplitude","./")
                         ExportData.export_as_mat(self.Thermogram_Phase, "Phase","./")           
