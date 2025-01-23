@@ -18,21 +18,23 @@ class Fourier:
     __W                 = complex               # Represents the W's Factor used in this Method
     __WNValue           = complex               # Represents the W's Factor when variables K and n are used in every frame processed (current WN value)
     __listener          = []                    # Se inicializa el controlador de receptores de eventos
-
     __Statistic         = {'Min':float,'Max':float, 'Mean':float}
     __currentStatistic  = {'Global':__Statistic, 'X':__Statistic, 'Y':__Statistic}
 
 
     __curr_image_frame  = np.array               # Represents the current image loaded and processed
 
+    currentLKP          = float                   # Current Lockin Period. Takes values between 1 and KFactor
+    lastframelkp        = float                 # Represents the last frames of each lockin period
+
     
-    Wn          = lambda _, W,  n , K: pow( W, (n - 1) * (K - 1))
-    KFactor     = lambda _, N,fe,fs: N*( fe / fs )+1
-    #FbP         = lambda _, modulation , framerate : (1/modulation) / (1/framerate)     # Frames by Lock-in Period
-    WFactor     = lambda _, N : cmath.exp(-1j*2*cmath.pi/N)
-    cp          = lambda _, F , N : int(F / N) + 1                                      # Current lock-in period value
-    rangeFrame  = lambda _, f, i, framerate : (f - i) - ((f - i)%framerate)                                         # Number of total frames to be process
-    vop         = lambda _, frames, current:((current * 100)) / frames              # Value  of  progress
+    Wn           = lambda _, W,  n , K: pow( W, (n - 1) * (K - 1))
+    KFactor      = lambda _, N,fe,fs: N*( fe / fs )+1
+    LastFrameLKP = lambda _, n,fe,fs: n* fs / fe
+    WFactor      = lambda _, N : cmath.exp(-1j*2*cmath.pi/N)
+    cp           = lambda _, F , N : int(F / N) + 1                                      # Current lock-in period value
+    rangeFrame   = lambda _, f, i, framerate : (f - i) - ((f - i)%framerate)                                         # Number of total frames to be process
+    vop          = lambda _, frames, current:((current * 100)) / frames              # Value  of  progress
    
 
     def register(self, listener):               # Mètodo que registra a los receptores de eventos de esta clase
@@ -75,6 +77,7 @@ class Fourier:
         self.__Frame_Rate       = value
         self.__Frames           = self.rangeFrame(self.FinalFrame,self.InitFrame,value)
         self.__K                = self.KFactor(self.N, self.Modulation, self.FrameRate)
+        self.lastframelkp       = self.LastFrameLKP(self.currentLKP, self.Modulation, self.FrameRate)
 
     # Total Frames to be Processed propeties
     @property
@@ -118,6 +121,7 @@ class Fourier:
     def Modulation(self, value: float):
         self.__modulation       = value
         self.__K                = self.KFactor(self.N,self.Modulation,self.FrameRate)
+        self.lastframelkp       = self.LastFrameLKP(self.currentLKP, self.Modulation, self.FrameRate)
 
     # Properties related with the k's Factor used byy this Method 
     @property                                   # gets the value of K's Factor used by this Method
@@ -174,6 +178,10 @@ class Fourier:
         
         for watcher in self.__listener:
             watcher.CurrentImage_Processed(self.__last_image_Frame)
+        
+        if self.CurrentFrame > self.lastframelkp:
+            self.currentLKP += 1
+            self.lastframelkp = self.LastFrameLKP(self.currentLKP, self.Modulation, self.FrameRate)
 
         self.CurrentFrame += 1
 
@@ -215,26 +223,32 @@ class Fourier:
 
 
     def __init__(self, Frames: int, FrameRate:int): 
-        self.Frames = Frames
-        self.FrameRate = FrameRate
-        self.isImageFull = False
-        self.__currentFrame = 1
-        self.kernel  = np.ones((3,3),np.uint8)
+        self.Frames             = Frames
+        self.FrameRate          = FrameRate
+        self.isImageFull        = False
+        self.__currentFrame     = 1
+        self.currentLKP         = 1
+        self.lastframelkp       = self.LastFrameLKP(self.currentLKP, self.Modulation, self.FrameRate)
+        self.kernel             = np.ones((3,3),np.uint8)
         self.__currentStatistic = {'Global':0 , 'X':0, 'Y':0}
 
 
     def __init__(self):
-        self.isImageFull = True
-        self.__init_frame = 0
-        self.__final_frame = 3000
-        self.__Frame_Rate = 1
-        self.__modulation = 0.2
-        self.__FramesByPeriod= 60
-        self.__currentFrame = 1
-        self.__porcentage = 0
-        self.kernel  = np.ones((3,3),np.uint8)
+        self.isImageFull        = True
+        self.__init_frame       = 0
+        self.__final_frame      = 3000
+        self.__Frame_Rate       = 1
+        self.__modulation       = 0.2
+        self.__FramesByPeriod   = 60
+        self.__currentFrame     = 1
+        self.currentLKP         = 1
+        self.lastframelkp       = self.LastFrameLKP(self.currentLKP, self.Modulation, self.FrameRate)
+        self.__porcentage       = 0
+        self.kernel             = np.ones((3,3),np.uint8)
         self.__currentStatistic = {'Global':0 , 'X':0, 'Y':0}
 
     def reset_fourier(self):
-        self.__currentFrame = 1
-        self.__porcentage = 0
+        self.__currentFrame     = 1
+        self.__porcentage       = 0
+        self.currentLKP         = 1
+        self.lastframelkp       = self.LastFrameLKP(self.currentLKP, self.Modulation, self.FrameRate)

@@ -7,12 +7,15 @@ class LockIn ():
 
     __frame                     = deque()       #Queue of frames to process
     __fourier                   = Fourier()     #lockin method
+    currentframeamp             = []
+    currentframephase           = []
 
     def __init__(self, fps, modulation, initFrame, finFrame) -> None:
         self.Fourier.InitFrame = initFrame
         self.Fourier.FinalFrame = finFrame
         self.Modulation =  modulation
         self.FrameRate = fps
+
        
     @property
     def Frame(self) -> deque: 
@@ -47,6 +50,10 @@ class LockIn ():
         return  self.Fourier.FrameRate
     
     @property
+    def LastFrameLKP(self) -> float:
+        return self.Fourier.lastframelkp
+    
+    @property
     def CurrentFrame(self) -> int:
         return  self.Fourier.CurrentFrame
     
@@ -73,7 +80,10 @@ class LockIn ():
     #  Execute the Fourier Method
     def Run_Fourier(self, img):
         self.__fourier.Thermogram = img
-        return  self.__fourier.Porcentage, self.Thermogram_Amplitude, self.Thermogram_Phase, self.__fourier.Thermogram
+        if (self.CurrentFrame - 2 == self.LastFrameLKP) and self.LastFrameLKP.is_integer():
+            self.currentframeamp = self.Thermogram_Amplitude
+            self.currentframephase = self.Thermogram_Phase
+        return  self.__fourier.Porcentage, self.currentframeamp, self.currentframephase, self.__fourier.Thermogram
     
     def get_FinalFrame(self):
         return self.Fourier.FinalFrame

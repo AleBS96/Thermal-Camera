@@ -275,7 +275,7 @@ class MainWindow:
         if ret == True:
             if self.lockinrunning and self.controller.is_lockin_done():
                 self.update_lockininformation(self.lockinporcentage)
-                if((self.controller.lockIn.CurrentFrame - 2) % float(self.frEntry.get()) == 0):
+                if (self.controller.lockIn.CurrentFrame - 2 == self.controller.lockIn.LastFrameLKP) and self.controller.lockIn.LastFrameLKP.is_integer():
                     self.update_Thermogram(self.controller.get_Thermogram_Amplitude(), self.amplitudeCanvas)
                     self.update_Thermogram(self.controller.get_Thermogram_Phase(),self.phaseCanvas)
                 if self.lockinporcentage >= 100:
@@ -482,7 +482,8 @@ class MainWindow:
         """
         Validates that the values ​​are numeric and not empty
         """                        
-        return text.isdigit() and (len(text) <= 7) and int(text) > 0  # Permite solo dígitos o vacío. 
+        #return text.isdigit() and (len(text) <= 7) and int(text) > 0  # Permite solo dígitos o vacío. 
+        return True
     
     def validate_values(self):
         """

@@ -81,7 +81,7 @@ class MainController:
                         Thermogram_Amplitude_N = Basics.imgNormalize(self.Thermogram_Amplitude)
                         Thermogram_Phase_N = Basics.imgNormalize(self.Thermogram_Phase)
                         #Save the amplitude and phase thermograms as two .png images 
-                        cv2.imwrite("./Phase"+".png", Thermogram_Phase_N )
+                        cv2.imwrite("./Phase"+".png", Thermogram_Phase_N)
                         cv2.imwrite("./Amplitude"+".png",Thermogram_Amplitude_N)
                         self.lockin_running = False
 
