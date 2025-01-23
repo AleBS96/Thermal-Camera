@@ -16,6 +16,7 @@ class MainWindow:
         self.time_visivle= False
         self.recording = False
         self.lockinrunning = False
+        self.lockinpause = False 
         self.lockinporcentage = 0
         self.root = tk.Tk()
         self.root.title("Interfaz Táctil - Cámara Térmica")
@@ -39,6 +40,7 @@ class MainWindow:
         self.execLockinButtonIcon = self.load_icon("app/assets/lockin/executelockin.png", self.colormapIcon_height - 20,self.colormapIcon_width - 20)
         self.stopLockinButtonIcon = self.load_icon("app/assets/lockin/stoplockin.png", self.colormapIcon_height - 20,self.colormapIcon_width - 20)
         self.resetLockinButtonIcon = self.load_icon("app/assets/lockin/resetlockin.png", self.colormapIcon_height - 15,self.colormapIcon_width - 15)
+        self.exportDataButtonIcon = self.load_icon("app/assets/lockin/exportdata.png", self.colormapIcon_height - 15,self.colormapIcon_width - 15)
         
 
         # Cargar imágenes de los mapas de colores
@@ -145,7 +147,7 @@ class MainWindow:
         self.notification = self.realtimevideoCanvas.create_text(30, 10, anchor=tk.NW, text='', fill="black", font=("Helvetica", 24))
 
         # Configurar las filas del grid en el Frame toolFrames
-        self.toolsFrame.grid_rowconfigure(0, weight=70)  # Fila Superior
+        self.toolsFrame.grid_rowconfigure(0, weight=80)  # Fila Superior
         self.toolsFrame.grid_rowconfigure(1, weight=1)  # Fila inferior
         self.toolsFrame.grid_rowconfigure(2, weight=70)  # Fila inferior
         self.toolsFrame.grid_columnconfigure(0, weight=1)
@@ -247,9 +249,10 @@ class MainWindow:
 
         #PushButton para iniciar o pausar procesamiento lockin
         self.execLockinButton = tk.Button(self.executeFrame, image=self.execLockinButtonIcon,borderwidth=0, background="#FFFFFF", command=self.toggle_lockinbutton)
-        self.execLockinButton.place(relx=0.1, rely=0.1, relwidth=0.25, relheight=1)
+        self.execLockinButton.place(relx=0.02, rely=0.1, relwidth=0.25, relheight=1)
         #PushButton para para reiniciar el procesamiento lockin
         self.resetLockinButton = tk.Button(self.executeFrame, image=self.resetLockinButtonIcon, borderwidth=0, background="#FFFFFF", command=self.reset_lockin)
+        self.exportDataButton = tk.Button(self.executeFrame, image=self.exportDataButtonIcon, borderwidth=0, background="#FFFFFF", command=self.export_data)
 
         self.porcentageFrame = ttk.Frame(self.informationFrame,style="Modern.TFrame" ) 
         self.porcentageFrame.grid(row=0, column=0, sticky="nsew")
@@ -325,10 +328,12 @@ class MainWindow:
             if not self.lockinrunning:
                 # Inicia del procesamiento lock in
                 self.lockinrunning = True
+                self.lockinpause = False 
                 self.change_framestate("disabled")       
             else:
                 # Detiene el procesamiento lockin
-                self.lockinrunning = False  
+                self.lockinrunning = False
+                self.lockinpause = True  
             self.update_lockinsection() 
         self.execLockinButton.focus_force()   
     
@@ -336,16 +341,22 @@ class MainWindow:
         if self.lockinrunning:
             self.execLockinButton.config(image=self.stopLockinButtonIcon)
             self.resetLockinButton.place_forget()
+            self.exportDataButton.place_forget()
             self.showSecondaryvideoframes()
             self.controller.start_lockin()
         else:
             self.execLockinButton.config(image=self.execLockinButtonIcon)
-            self.resetLockinButton.place(relx=0.35, rely=0.1, relwidth=0.25, relheight=1)
+            self.resetLockinButton.place(relx=0.27, rely=0.1, relwidth=0.25, relheight=1)
+            if not self.lockinpause:
+                self.exportDataButton.place(relx=0.65, rely=0.1, relwidth=0.25, relheight=1)
             self.controller.stop_lockin()    
 
     def reset_lockin(self):
         self.resetLockinButton.place_forget()
+        self.exportDataButton.place_forget()
         self.controller.reset_Lockin()
+        self.lockinrunning = False
+        self.lockinpause = False
         self.change_framestate("normal")
         self.reset_lockininformation()
 
@@ -357,6 +368,9 @@ class MainWindow:
     def update_lockininformation(self, porcentage):
         self.porcentageLabel.config(text="{:.0f}".format(porcentage)+"%")   
         self.porcentageBar["value"]  = porcentage
+
+    def export_data(self):
+        self.controller.export_data()
 
     def run(self):
         self.root.mainloop()
@@ -516,7 +530,10 @@ class MainWindow:
             return True
         
     def change_framestate(self, currentState):
-        # cambiar estado todos los widgets dentro del Frame parametros del lock in
+        """cambiar estado todos los widgets dentro del 
+        Frame parametros del lock in. Habilitados 
+        # si no hay procesamiento lockin ejecutandose. 
+        # Deshabilitarlos en caso contrario"""
         for widget in self.paramFrame.winfo_children():
             widget.winfo_children()[1].configure(state=currentState)
 

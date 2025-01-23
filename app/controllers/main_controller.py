@@ -76,13 +76,6 @@ class MainController:
                     self.lockin_done = True
                     a = self.lockIn.CurrentFrame
                     if self.lockInPorcentage == 100:
-                        ExportData.export_as_mat(self.Thermogram_Amplitude, "Amplitude","./")
-                        ExportData.export_as_mat(self.Thermogram_Phase, "Phase","./")           
-                        Thermogram_Amplitude_N = Basics.imgNormalize(self.Thermogram_Amplitude)
-                        Thermogram_Phase_N = Basics.imgNormalize(self.Thermogram_Phase)
-                        #Save the amplitude and phase thermograms as two .png images 
-                        cv2.imwrite("./Phase"+".png", Thermogram_Phase_N)
-                        cv2.imwrite("./Amplitude"+".png",Thermogram_Amplitude_N)
                         self.lockin_running = False
 
             #Formatea el frame segun los par'ametros seleccionados por el usuario
@@ -178,6 +171,15 @@ class MainController:
         self.lockin_done = False
         self.clearFrameBuffer()
         self.capturedFrameslockin = 0
+    
+    def export_data(self):
+        ExportData.export_as_mat(self.Thermogram_Amplitude, "Amplitude","./")
+        ExportData.export_as_mat(self.Thermogram_Phase, "Phase","./")           
+        Thermogram_Amplitude_N = Basics.imgNormalize(self.Thermogram_Amplitude)
+        Thermogram_Phase_N = Basics.imgNormalize(self.Thermogram_Phase)
+        #Save the amplitude and phase thermograms as two .png images 
+        cv2.imwrite("./Phase"+".png", Thermogram_Phase_N)
+        cv2.imwrite("./Amplitude"+".png",Thermogram_Amplitude_N)
 
     def get_Thermogram_Amplitude(self):
         Thermogram_Amplitude_N = Basics.imgNormalize(self.Thermogram_Amplitude)
@@ -220,26 +222,17 @@ class MainController:
                 self.ret = ret
                 
                 #adframes += 1
-                if(adframes == self.fps):
+                """if(adframes == self.fps):
                     elapsed_time = time.time() - start_time
                     print(f"Time for {self.fps}: {elapsed_time:.2f}")
                     adframes = 0
-                    start_time = time.time()
+                    start_time = time.time()"""
                 
                 if self.ret and self.lockin_running and self.capturedFrameslockin <= self.lockIn.get_FinalFrame():
                     #color_mapped_frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
                     self.FrameBuffer = encoded_frame
                     self.capturedFrameslockin += 1
-                    #if(index < 2999):
-                    #    index += 1
-                    
-                #time.sleep(0.01)
 
-                """ if(self.capturedFrameslockin > self.lockIn.get_FinalFrame()):
-                    # Calcula el tiempo transcurrido
-                    elapsed_time1 = time.time() - self.start_time1
-                    print(f"Time for 3000: {elapsed_time1:.2f}")"""
-                
                 """if self.ret:
                     if self.ret and self.lockin_running and self.i<8000:
                         # Extraer la matriz del video # La clave 'Video' puede variar según el archivo
