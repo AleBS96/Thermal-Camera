@@ -3,11 +3,7 @@ from tkinter import ttk
 from app.utils.style import Style
 from PIL import Image, ImageTk
 from tkinter import messagebox
-
-# Configuración del estilo
-
-BACKGROUND_COLOR = "#3b4344"
-ENTRYBACKGROUND_COLOR = "#3b4340"
+from app.models.filepath_model import FilePathManager
 
 class MainWindow:
     def __init__(self, controller):
@@ -97,7 +93,7 @@ class MainWindow:
         self.shutdownButton.place(relx=0, rely=0, relwidth=1, relheight=1)
         
         # Creando los botones para gestion de archivos
-        self.loadButton = ttk.Button(self.fileFrame, image = self.loadButtonIcon,style="Modern.TButton", command=self.load_image, takefocus=True)
+        self.loadButton = ttk.Button(self.fileFrame, image = self.loadButtonIcon,style="Modern.TButton", command=self.load_file, takefocus=True)
         self.loadButton.place(relx=0, rely=0, relwidth=1, relheight=1)
         
         # Creando los botones de captura de frames
@@ -209,7 +205,7 @@ class MainWindow:
         #Entrada de Frecuencia frame inicial
         self.initEntry_var = tk.StringVar()                                                  # Crear una variable de control
         self.initLabel = ttk.Label(self.initFrame,style="Modern.TLabel",justify="center", text="F. Inicial")
-        self.initEntry = ttk.Entry(self.initFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.initEntry_var,font=("Arial",10), justify="right",style="Modern.TEntry")
+        self.initEntry = ttk.Entry(self.initFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.initEntry_var,font=("Arial",10), justify="right",style="Modern.TEntry", state="disabled")
         self.initEntry.bind("<FocusOut>", self.on_initEntry_change)
         self.initEntry.bind("<Return>", self.on_initEntry_change)
         self.initLabel.place(relx=0.1, rely=0, relwidth=1, relheight=0.5)
@@ -391,8 +387,8 @@ class MainWindow:
         self.menubutton.config(image=imagen)
         self.controller.change_colorMapVar(color_map)
 
-    def load_image(self):
-        pass
+    def load_file(self):
+        self.controller.load_file(FilePathManager.select_file_to_open(".", ".mat"))
 
     def set_notification(self, text):
         self.counttime += 1

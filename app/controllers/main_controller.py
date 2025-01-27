@@ -13,7 +13,7 @@ from app.models.mediasaver_model import ImageSaver
 from app.models.frameprocessor import FrameProcessor
 from app.models.lockin_model import LockIn
 from app.models.exportData_model import ExportData
-from app.models.media import Video
+from app.models.media import MatFile
 
 class MainController:
     
@@ -22,10 +22,11 @@ class MainController:
 
     def __init__(self):
         self.cap = CameraModel(0, "YUYV")
-        #self.video = Video("video.mat")
         self.frameProcessor = FrameProcessor()
         self.fps = self.cap.fps()
         self.lockIn = LockIn(self.fps, 1.0, 0, 3000)
+        self.inlive = True
+        self.livevideo = True
         self.softwarerunning = True
         self.recording = False
         self.lockInPorcentage = 0
@@ -34,10 +35,7 @@ class MainController:
         self.ret = False
         self.lockin_done = False
         self.capturedFrameslockin = 0
-        self.delay = 1/self.cap.fps()
-  
-        #self.n = 0
-        self.i = 3000
+        self.i = 0
 
         self.hilo_video = threading.Thread(target=self.Capture_Frame)
         self.hilo_video.start()
@@ -78,7 +76,7 @@ class MainController:
                     if self.lockInPorcentage == 100:
                         self.lockin_running = False
 
-            #Formatea el frame segun los par'ametros seleccionados por el usuario
+            #Formatea el frame segun los parametros seleccionados por el usuario
             self.color_mapped_frame = self.frameProcessor.setColorMap(self.frame)
             self.color_mapped_splitted_frame = self.frameProcessor.setFrameSection(self.color_mapped_frame, "TOP") 
             if self.recording:
@@ -101,12 +99,19 @@ class MainController:
         self.frameProcessor.setColorMapVar(selected_map)
         
     def start_recording (self):
-        # Seleccionar la ruta para guardar el archivo      
+        """# Seleccionar la ruta para guardar el archivo      
         frame_width = int(self.cap.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         frame_height = int(self.cap.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
         self.video_saver = VideoSaver(save_dir="./captures/videos", video_name="temp", frame_width=frame_width, frame_height=frame_height, fps = self.cap.fps())
         self.video_saver.start_saving()
+     
+        # Variable para guardar el tiempo de inicio
+        self.recordingstart_time = time.time()
+
+        self.recording = True"""
+
+        frames = []  # Lista para almacenar los frames
      
         # Variable para guardar el tiempo de inicio
         self.recordingstart_time = time.time()
@@ -120,7 +125,7 @@ class MainController:
         if file_name:
             # Asegurarse de que el nombre no tenga extensión
             file_name = os.path.splitext(file_name)[0]  
-            save_path = os.path.join(self.video_saver.save_dir, f"{file_name}.avi")
+            save_path = os.path.join(self.video_saver.save_dir, f"{file_name}.mat")
             
             # Cerrar el video_writer
             self.video_saver.stop_saving()
@@ -194,6 +199,11 @@ class MainController:
     def is_lockin_done(self):
         return self.lockin_done
     
+    def load_file(self, path):
+        """Carga una archivo .mat"""
+        self.file = MatFile(path)
+        self.inlive = False
+    
     def release(self):
         self.softwarerunning = False
         self.cap.release()
@@ -206,21 +216,37 @@ class MainController:
 
     """ SECOND THREAD: GET THE FRAMES FROM THE THERMAL DETECTOR"""
     def Capture_Frame (self):
-        adframes = 0
         index = 0
-        start_time = time.time()
         while self.softwarerunning:
-            with self.__lock:      
-                ret, encoded_frame = self.cap.get_frame()
-                #ret, encoded_frame = self.video.get_videoFrame(index)
 
-                if not ret:
-                    print("No se pudo leer el frame")
-                    break
-               
-                self.frame = self.frameProcessor.yuv2bgr_yuyv(encoded_frame)
-                self.ret = ret
-                
+            with self.__lock:
+                if self.inlive:
+                   ret, encoded_frame = self.cap.get_frame()
+                   if not ret:
+                      print("No se pudo leer el frame")
+                      break
+
+                   self.frame = self.frameProcessor.yuv2bgr_yuyv(encoded_frame)
+                   self.ret = ret
+
+                   if self.ret and self.lockin_running and self.capturedFrameslockin <= self.lockIn.get_FinalFrame():
+                      self.FrameBuffer = encoded_frame
+                      self.capturedFrameslockin += 1
+ 
+                else:
+                    time.sleep(0.1)
+                    ret, encoded_frame = self.file.get_videoFrame(index)
+
+                    if not ret:
+                        print("No se pudo leer el frame")
+                        break     
+                    else:
+                        self.frame = self.frameProcessor.yuv2bgr_yuyv(encoded_frame)
+                        index += 1 
+                        if self.lockin_running and self.i < self.file.totalframes:
+                            self.i = self.i+1
+                            self.FrameBuffer = self.frame
+                      
                 #adframes += 1
                 """if(adframes == self.fps):
                     elapsed_time = time.time() - start_time
@@ -228,21 +254,3 @@ class MainController:
                     adframes = 0
                     start_time = time.time()"""
                 
-                if self.ret and self.lockin_running and self.capturedFrameslockin <= self.lockIn.get_FinalFrame():
-                    #color_mapped_frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
-                    self.FrameBuffer = encoded_frame
-                    self.capturedFrameslockin += 1
-
-                """if self.ret:
-                    if self.ret and self.lockin_running and self.i<8000:
-                        # Extraer la matriz del video # La clave 'Video' puede variar según el archivo
-                        self.frame = self.video.video_frames[:, :, 0, self.i]  # Extraer el frame i
-                        self.i = self.i+1
-                        self.FrameBuffer = self.frame
-                else:
-                    self.frame = self.video.video_frames[:, :, 0, self.i]  # Extraer el frame i
-                    self.ret = 1"""
-
-                    
-
-    

@@ -93,3 +93,4 @@ class ImageSaver:
     cap.release()
     video_saver.stop_saving()
     cv2.destroyAllWindows()'''
+
