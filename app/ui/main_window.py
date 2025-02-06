@@ -37,10 +37,10 @@ class MainWindow:
         self.stopLockinButtonIcon = self.load_icon("app/assets/lockin/stoplockin.png", self.colormapIcon_height - 20,self.colormapIcon_width - 20)
         self.resetLockinButtonIcon = self.load_icon("app/assets/lockin/resetlockin.png", self.colormapIcon_height - 15,self.colormapIcon_width - 15)
         self.exportDataButtonIcon = self.load_icon("app/assets/lockin/exportdata.png", self.colormapIcon_height - 15,self.colormapIcon_width - 15)
+        self.liveButtonIcon = self.load_icon("app/assets/live/live.png", self.colormapIcon_height - 10,self.colormapIcon_width - 10)
         
 
         # Cargar imágenes de los mapas de colores
-        self.noicon = self.load_icon("app/assets/color_map/nocolormap.png",self.colormapIcon_height,self.colormapIcon_width)  
         self.hoticon = self.load_icon("app/assets/color_map/hot.png",self.colormapIcon_height,self.colormapIcon_width)  
         self.coolicon = self.load_icon("app/assets/color_map/cool.png",self.colormapIcon_height,self.colormapIcon_width)  
         self.plasmaicon = self.load_icon("app/assets/color_map/plasma.png",self.colormapIcon_height,self.colormapIcon_width)
@@ -108,15 +108,14 @@ class MainWindow:
 
         # Crear un Menu desplegable
         self.menu = tk.Menu(self.menubutton, tearoff=0)
-        self.menubutton.config(menu=self.menu, image=self.noicon)
+        self.menubutton.config(menu=self.menu, image=self.graysicon)
         
         # Agregar las opciones al menú sin texto (solo imágenes)
-        self.menu.add_command(image=self.noicon, command=lambda:self.change_colorMap("ORIGINAL", self.noicon))
+        self.menu.add_command(image=self.graysicon, command=lambda:self.change_colorMap("ORIGINAL", self.graysicon))
         self.menu.add_command(image=self.hoticon, command=lambda:self.change_colorMap("HOT", self.hoticon))
         self.menu.add_command(image=self.coolicon, command=lambda:self.change_colorMap("COOL", self.coolicon))
         self.menu.add_command(image=self.plasmaicon, command=lambda:self.change_colorMap("PLASMA", self.plasmaicon))
         self.menu.add_command(image=self.turboicon, command=lambda:self.change_colorMap("TURBO", self.turboicon))
-        self.menu.add_command(image=self.graysicon, command=lambda:self.change_colorMap( "GRAYS", self.graysicon))
         self.menu.add_command(image=self.jeticon, command=lambda:self.change_colorMap("JET", self.jeticon))
 
          # Crear los tres marcos de video
@@ -146,16 +145,22 @@ class MainWindow:
         self.toolsFrame.grid_rowconfigure(0, weight=80)  # Fila Superior
         self.toolsFrame.grid_rowconfigure(1, weight=1)  # Fila inferior
         self.toolsFrame.grid_rowconfigure(2, weight=70)  # Fila inferior
+        self.toolsFrame.grid_rowconfigure(3, weight=1)  # Fila inferior
+        self.toolsFrame.grid_rowconfigure(4, weight=10)  # Fila inferior
         self.toolsFrame.grid_columnconfigure(0, weight=1)
 
         self.lockinFrame = ttk.Frame(self.toolsFrame,style="Modern.TFrame")
         self.toolsSeparador = ttk.Separator(self.toolsFrame,style="Modern.TSeparator")
         self.analysisFrame = ttk.Frame(self.toolsFrame,style="Modern.TFrame")
+        self.analysisSeparador = ttk.Separator(self.toolsFrame,style="Modern.TSeparator")
+        self.LiveFrame = ttk.Frame(self.toolsFrame,style="Modern.TFrame")
 
         # Colocando los los subframes dentro del frame toolFrams
         self.lockinFrame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
         self.toolsSeparador.grid(row=1, column=0,padx=10, pady=10, sticky="nsew")
         self.analysisFrame.grid(row=2, column=0, sticky="nsew")
+        self.analysisSeparador.grid(row=3, column=0,padx=10, pady=10, sticky="nsew")
+        self.LiveFrame.grid(row=4, column=0, sticky="nsew")
 
         # Configurar las filas del grid en el Frame lockinFrames
         self.lockinFrame.grid_rowconfigure(0, weight=10)
@@ -265,12 +270,14 @@ class MainWindow:
         )
         self.porcentageBar.place(relx=0.1, rely=0.6,relheight=0.4, relwidth=0.8)
 
+        self.liveButton = tk.Button(self.LiveFrame, image=self.liveButtonIcon, borderwidth=0, background="#FFFFFF", command=self.on_toLive)
+
         self.set_defautLockinparameters()
 
         self.update_frame() 
 
     def update_frame(self):
-        ret,frame,elapsedtime,self.time_visible, self.lockinporcentage, lockinrunning = self.controller.update_frame()
+        ret,frame,elapsedtime,self.time_visible, self.lockinporcentage, lockinrunning, maxValuePixel, minValuePixel = self.controller.update_frame()
         if ret == True:
             if self.lockinrunning and self.controller.is_lockin_done():
                 self.update_lockininformation(self.lockinporcentage)
@@ -281,8 +288,10 @@ class MainWindow:
                     self.lockinrunning = False
                     self.update_lockinsection()
             else:
+                self.realtimevideoCanvas.delete("all")
                 self.update_Thermogram(frame,self.realtimevideoCanvas)
-
+                self.update_MaxMinTemp(self.realtimevideoCanvas, maxValuePixel, minValuePixel)
+                
             if self.time_visible == True:
                 # Actualizar el tiempo en el canvas
                 self.realtimevideoCanvas.itemconfigure(self.notification, text=elapsedtime)
@@ -389,6 +398,7 @@ class MainWindow:
 
     def load_file(self):
         self.controller.load_file(FilePathManager.select_file_to_open(".", ".mat"))
+        self.liveButton.place(relx=0.70, rely=0, relwidth=0.25, relheight=1)
 
     def set_notification(self, text):
         self.counttime += 1
@@ -426,7 +436,11 @@ class MainWindow:
         else:
             self.controller.on_finEntry_change(float(self.finEntry_var.get()))
             self.update_lockininformation(self.lockinporcentage)
-            
+
+    def on_toLive(self):
+        self.liveButton.place_forget()
+        self.controller.on_toLive()
+                    
     def showSecondaryvideoframes(self):
         self.frames[1].place(relx=0.80, rely=0.60, relwidth=0.2, relheight=0.2)  # Pequeño 1
         self.frames[2].place(relx=0.80, rely=0.80, relwidth=0.2, relheight=0.2)  # Pequeño 2
@@ -537,6 +551,22 @@ class MainWindow:
             for widget in child_frame.winfo_children():
                 widget.configure(state=currentState)
         
+    def update_MaxMinTemp(self,canvas, maxpixel, minpixel):
+        x_min, y_min = map(int, minpixel.Position)  
+        x_max, y_max = map(int, maxpixel.Position)
+                
+        # Dibujar círculos en los puntos mínimo y máximo
+        canvas.create_oval(x_min - 5, y_min - 5, 
+        x_min + 5, y_min + 5, 
+        fill="blue", outline="blue")
+
+        canvas.create_oval(x_max - 5, y_max - 5, 
+        x_max + 5, y_max + 5, 
+        fill="red", outline="red")
+                
+        canvas.create_text(x_min + 25, y_min, text=str(round(minpixel.Value, 2)), fill="blue")
+        canvas.create_text(x_max + 25, y_max, text=str(round(maxpixel.Value, 2)), fill="red")
+
 
 
 

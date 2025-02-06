@@ -21,8 +21,7 @@ class VideoSaver:
         video_path = os.path.join(self.save_dir, f"{self.video_name}.avi")
         
         # Definir el codec y crear el VideoWriter para guardar el video
-        # Para Windows, 'MJPG' o 'XVID' suelen funcionar bien
-        fourcc = cv2.VideoWriter_fourcc(*'MJPG')  # Prueba también 'XVID'
+        fourcc = cv2.VideoWriter_fourcc(*'MJPG')
         self.video_writer = cv2.VideoWriter(video_path, fourcc, self.fps, (self.frame_width, self.frame_height))
 
         # Verificar si el VideoWriter se inicializó correctamente

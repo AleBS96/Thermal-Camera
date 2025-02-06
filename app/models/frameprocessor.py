@@ -1,10 +1,10 @@
 import cv2
 import numpy as np
+from app.models.pixel import Pixel
 
 class FrameProcessor:
 
     colorMapDict = {
-        "GRAYS":cv2.COLOR_BGR2GRAY,
         "JET": cv2.COLORMAP_JET,
         "HOT": cv2.COLORMAP_HOT,
         "COOL": cv2.COLORMAP_COOL,
@@ -24,11 +24,7 @@ class FrameProcessor:
     
     def setColorMap(self, frame):
         if self.colorMapVar == "ORIGINAL":
-            color_mapped_frame = frame
-        
-        elif self.colorMapVar == "GRAYS":
-            color_mapped_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-       
+            color_mapped_frame = frame    
         else:
             color_map = self.colorMapDict.get(self.colorMapVar)
             color_mapped_frame = cv2.applyColorMap(frame, color_map)
@@ -50,7 +46,7 @@ class FrameProcessor:
         return frame
 
     def frame_decoder(self,imagen):
-        """AI is creating summary for frame_decoder
+        """summary for frame_decoder
         The function receives  an image in YUYV format distributed in 2 
         arrays.One with the Y luminances and others with the UV chromances 
         (CbCr) and is returned in a 16-bit matrix in the form UYVY
@@ -61,13 +57,10 @@ class FrameProcessor:
         Returns:
             [type]: [Processed image]
         """
-        #Se divide la imagen en 2 
-        height, width = imagen.shape[:2]
-        imagen_seccionada = imagen[height // 2:, :]  #Se obtiene la parte inferior de la imagen
             
         # Separar los canales Y, Cb y Cr
-        Y = imagen_seccionada[:, :, 0]   # Luminancia
-        Cb1 = imagen_seccionada[:, :, 1] # Crominancia azul
+        Y = imagen[:, :, 0]   # Luminancia
+        Cb1 = imagen[:, :, 1] # Crominancia azul
 
         # Obtener dimensiones de Y
         height, width = Y.shape
@@ -92,5 +85,23 @@ class FrameProcessor:
 
         return Decoded_image.astype(np.float64)
     
-    def yuv2bgr_yuyv (self, frame):
-        return cv2.cvtColor(frame, cv2.COLOR_YUV2BGR_YUYV)
+    def Get_Maximum (self, frame):
+        maxPixel = Pixel()
+        maxTemp = np.max(frame)
+        maxPixel.Position = np.where(frame == maxTemp)
+        Temp = frame[maxPixel.Position[0],maxPixel.Position[1],1]
+        maxPixel.Value = np.float64((int(Temp) << 8) | maxTemp)
+        return maxPixel
+    
+    def Get_Minimum (self, frame):
+        minPixel = Pixel()
+        minTemp = np.min(frame)
+        minPixel.Position = np.where(frame == minTemp) 
+        Temp = frame[minPixel.Position[0],minPixel.Position[1],1]
+        minPixel.Value = np.float64((int(Temp) << 8) | minTemp)
+        return minPixel
+
+    def yuv2gray_yuyv (self, frame):
+        return cv2.cvtColor(frame, cv2.COLOR_YUV2GRAY_YUYV)
+    
+    

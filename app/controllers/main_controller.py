@@ -14,11 +14,17 @@ from app.models.frameprocessor import FrameProcessor
 from app.models.lockin_model import LockIn
 from app.models.exportData_model import ExportData
 from app.models.media import MatFile
+from app.models.pixel import Pixel
+from app.utils.converter import pixel_to_temperature
 
 class MainController:
     
     __lock                      = threading.Lock()
     __frames_buffer             = deque()
+    __frame                     = None
+    maxValuePixel               = Pixel()
+    minValuePixel               = Pixel()
+
 
     def __init__(self):
         self.cap = CameraModel(0, "YUYV")
@@ -26,15 +32,16 @@ class MainController:
         self.fps = self.cap.fps()
         self.lockIn = LockIn(self.fps, 1.0, 0, 3000)
         self.inlive = True
-        self.livevideo = True
         self.softwarerunning = True
         self.recording = False
         self.lockInPorcentage = 0
         self.lockin_running = False
-        self.frame = None
+        self.frameMaxvalue = 255
+        self.frameMaxvalue = 255
         self.ret = False
         self.lockin_done = False
         self.capturedFrameslockin = 0
+        self.start_time = time.time() 
         self.i = 0
 
         self.hilo_video = threading.Thread(target=self.Capture_Frame)
@@ -44,6 +51,18 @@ class MainController:
     @property
     def FrameBuffer(self) -> deque: 
         return self.__frames_buffer
+    
+    @property
+    def Frame(self) -> deque:
+        return self.__frame
+    
+    @Frame.getter
+    def Frame(self) -> deque:
+        return self.__frame
+    
+    @Frame.setter
+    def Frame(self,frame):
+        self.__frame = frame
 
     @FrameBuffer.getter
     def FrameBuffer(self) -> deque:
@@ -61,33 +80,35 @@ class MainController:
 
     def update_frame(self):
         formatted_time = None
-        b = self.lockIn.CurrentFrame
-        color_mapped_splitted_frame_RGB = None
+        self.color_mapped_splitted_frame = None
         if self.ret == True:
+            #Formatea el frame segun los parametros seleccionados por el usuario
+            self.top_splitted_frame = self.frameProcessor.setFrameSection(self.Frame, "TOP") 
+            self.bottom_splitted_frame = self.frameProcessor.setFrameSection(self.Frame, "BOTTOM")
+            self.top_splitted_frame_gray = self.frameProcessor.yuv2gray_yuyv(self.top_splitted_frame) 
+            self.color_mapped_splitted_frame = self.frameProcessor.setColorMap(self.top_splitted_frame_gray)
+            elapsed_time = time.time() - self.start_time
+        
+            if (elapsed_time > 1):
+                self.maxValuePixel = pixel_to_temperature(self.frameProcessor.Get_Maximum(self.bottom_splitted_frame))
+                self.minValuePixel = pixel_to_temperature(self.frameProcessor.Get_Minimum(self.bottom_splitted_frame))
+                self.start_time = time.time()
+
             if self.lockin_running:
-                buffer_ret, buffer_frame = self.FrameBuffer                
-                
+                buffer_ret, self.Frame = self.FrameBuffer                           
                 #Se realiza el procesamiento lockin del frame actual
                 if buffer_ret:
-                    decoded_frame = self.frameProcessor.frame_decoder(buffer_frame)
+                    decoded_frame = self.frameProcessor.frame_decoder(self.Frame)
                     self.lockInPorcentage, self.Thermogram_Amplitude, self.Thermogram_Phase, self.Thermogram = self.lockIn.Run_Fourier(decoded_frame)
                     self.lockin_done = True
-                    a = self.lockIn.CurrentFrame
                     if self.lockInPorcentage == 100:
                         self.lockin_running = False
 
-            #Formatea el frame segun los parametros seleccionados por el usuario
-            self.color_mapped_frame = self.frameProcessor.setColorMap(self.frame)
-            self.color_mapped_splitted_frame = self.frameProcessor.setFrameSection(self.color_mapped_frame, "TOP") 
             if self.recording:
-                #Guarda el frame actual
-                 self.video_saver.save_frame(self.color_mapped_splitted_frame)
-                 #Calcula el tiempo transcurrido
-                 formatted_time = self.elapsed_time()
-                
-            color_mapped_splitted_frame_RGB = cv2.cvtColor(self.color_mapped_splitted_frame, cv2.COLOR_BGR2RGB)
+                #Calcula el tiempo transcurrido
+                formatted_time = self.elapsed_time()
 
-        return self.ret, color_mapped_splitted_frame_RGB, formatted_time, self.recording, self.lockInPorcentage,  self.lockin_running,
+        return self.ret, self.color_mapped_splitted_frame, formatted_time, self.recording, self.lockInPorcentage,  self.lockin_running, self.maxValuePixel, self.minValuePixel
     
     def elapsed_time (self):
         # Calcular el tiempo transcurrido y formatearlo como hh:mm:ss
@@ -108,11 +129,9 @@ class MainController:
      
         # Variable para guardar el tiempo de inicio
         self.recordingstart_time = time.time()
-
         self.recording = True"""
-
-        frames = []  # Lista para almacenar los frames
      
+        self.videoframes = []
         # Variable para guardar el tiempo de inicio
         self.recordingstart_time = time.time()
 
@@ -120,21 +139,18 @@ class MainController:
 
     def stop_recording (self):
         self.recording = False
-        file_name = simpledialog.askstring("Nombre del archivo", "Introduce el nombre del video:")
-        
+        file_name = simpledialog.askstring("Nombre del archivo", "Introduce el nombre del video:")    
         if file_name:
-            # Asegurarse de que el nombre no tenga extensión
-            file_name = os.path.splitext(file_name)[0]  
-            save_path = os.path.join(self.video_saver.save_dir, f"{file_name}.mat")
+            ExportData.export_as_mat({"video_frames": self.videoframes}, file_name ,"./captures/videos")
             
-            # Cerrar el video_writer
-            self.video_saver.stop_saving()
+            """ # Cerrar el video_writer
+            self.video_saver.stop_saving()"""
 
-            # Renombrar el archivo temporal
-            os.rename('./captures/videos/temp.avi', save_path)
+            """# Renombrar el archivo temporal
+            os.rename('./captures/videos/temp.avi', save_path)"""
    
             ###cambiar la ventana emergente por notificacione en la app
-            messagebox.showinfo("Éxito", f"El video ha sido guardado como: {save_path}")
+            messagebox.showinfo("Éxito", f"El video ha sido guardado como: ./captures/videos/{file_name}")
         else:
             ###cambiar la ventana emergente por notificacione en la app
             messagebox.showwarning("Advertencia", "No se ha guardado el video.")
@@ -166,6 +182,8 @@ class MainController:
 
     def start_lockin(self):
         self.lockin_running = True
+        if not self.inlive:
+            self.videoindex = 0
         self.start_time1 = time.time()
     
     def stop_lockin(self):
@@ -203,9 +221,14 @@ class MainController:
         """Carga una archivo .mat"""
         self.file = MatFile(path)
         self.inlive = False
+        self.videoindex = 0
+    
+    def on_toLive(self):
+        self.inlive = True
     
     def release(self):
         self.softwarerunning = False
+        self.hilo_video.join()
         self.cap.release()
 
     def shutdown_system(self):
@@ -214,43 +237,38 @@ class MainController:
         if response:  # Si se presiona "OK"
             os.system("sudo shutdown now")
 
-    """ SECOND THREAD: GET THE FRAMES FROM THE THERMAL DETECTOR"""
+
+    """SECOND THREAD: GET THE FRAMES FROM THE THERMAL DETECTOR"""
     def Capture_Frame (self):
-        index = 0
         while self.softwarerunning:
 
             with self.__lock:
                 if self.inlive:
-                   ret, encoded_frame = self.cap.get_frame()
+                   ret, self.Frame = self.cap.get_frame()
                    if not ret:
                       print("No se pudo leer el frame")
                       break
+                   else:
+                        if self.recording:
+                            self.videoframes.append(self.Frame)
 
-                   self.frame = self.frameProcessor.yuv2bgr_yuyv(encoded_frame)
-                   self.ret = ret
+                        self.ret = ret 
 
-                   if self.ret and self.lockin_running and self.capturedFrameslockin <= self.lockIn.get_FinalFrame():
-                      self.FrameBuffer = encoded_frame
-                      self.capturedFrameslockin += 1
- 
+                        if self.ret and self.lockin_running and self.capturedFrameslockin <= self.lockIn.get_FinalFrame():
+                            self.FrameBuffer = self.Frame
+                            self.capturedFrameslockin += 1
                 else:
-                    time.sleep(0.1)
-                    ret, encoded_frame = self.file.get_videoFrame(index)
-
+                    time.sleep(0.04)
+                    ret, self.Frame = self.file.get_videoFrame(self.videoindex)
                     if not ret:
                         print("No se pudo leer el frame")
-                        break     
+                        break  
                     else:
-                        self.frame = self.frameProcessor.yuv2bgr_yuyv(encoded_frame)
-                        index += 1 
-                        if self.lockin_running and self.i < self.file.totalframes:
+                        self.ret = ret
+                        self.videoindex += 1     
+                        if self.videoindex >= self.file.totalframes:
+                            self.videoindex = 0
+                        if self.lockin_running:
                             self.i = self.i+1
-                            self.FrameBuffer = self.frame
-                      
-                #adframes += 1
-                """if(adframes == self.fps):
-                    elapsed_time = time.time() - start_time
-                    print(f"Time for {self.fps}: {elapsed_time:.2f}")
-                    adframes = 0
-                    start_time = time.time()"""
+                            self.FrameBuffer = self.Frame
                 
