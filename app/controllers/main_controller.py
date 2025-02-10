@@ -1,6 +1,7 @@
 import cv2
 import os
 import datetime
+import numpy as np
 from pathlib import Path
 from tkinter import simpledialog, messagebox
 import time
@@ -80,20 +81,9 @@ class MainController:
 
     def update_frame(self):
         formatted_time = None
+        colorscale = None
         self.color_mapped_splitted_frame = None
         if self.ret == True:
-            #Formatea el frame segun los parametros seleccionados por el usuario
-            self.top_splitted_frame = self.frameProcessor.setFrameSection(self.Frame, "TOP") 
-            self.bottom_splitted_frame = self.frameProcessor.setFrameSection(self.Frame, "BOTTOM")
-            self.top_splitted_frame_gray = self.frameProcessor.yuv2gray_yuyv(self.top_splitted_frame) 
-            self.color_mapped_splitted_frame = self.frameProcessor.setColorMap(self.top_splitted_frame_gray)
-            elapsed_time = time.time() - self.start_time
-        
-            if (elapsed_time > 1):
-                self.maxValuePixel = pixel_to_temperature(self.frameProcessor.Get_Maximum(self.bottom_splitted_frame))
-                self.minValuePixel = pixel_to_temperature(self.frameProcessor.Get_Minimum(self.bottom_splitted_frame))
-                self.start_time = time.time()
-
             if self.lockin_running:
                 buffer_ret, self.Frame = self.FrameBuffer                           
                 #Se realiza el procesamiento lockin del frame actual
@@ -103,13 +93,34 @@ class MainController:
                     self.lockin_done = True
                     if self.lockInPorcentage == 100:
                         self.lockin_running = False
+            else:
+                #Formatea el frame segun los parametros seleccionados por el usuario
+                self.top_splitted_frame = self.frameProcessor.setFrameSection(self.Frame, "TOP") 
+                self.bottom_splitted_frame = self.frameProcessor.setFrameSection(self.Frame, "BOTTOM")
+                self.top_splitted_frame_gray = self.frameProcessor.yuv2gray_yuyv(self.top_splitted_frame) 
+                self.color_mapped_splitted_frame = self.frameProcessor.setColorMap(self.top_splitted_frame_gray)
+                elapsed_time = time.time() - self.start_time
+               
+                if (elapsed_time > 1):
+                    self.minValuePixel, self.maxValuePixel = self.frameProcessor.Get_MaxMin(self.top_splitted_frame_gray, self.bottom_splitted_frame)
+                    self.minValuePixel = pixel_to_temperature(self.minValuePixel)
+                    self.maxValuePixel = pixel_to_temperature(self.maxValuePixel)
+                    self.start_time = time.time()
 
             if self.recording:
                 #Calcula el tiempo transcurrido
                 formatted_time = self.elapsed_time()
 
-        return self.ret, self.color_mapped_splitted_frame, formatted_time, self.recording, self.lockInPorcentage,  self.lockin_running, self.maxValuePixel, self.minValuePixel
+        return self.ret, self.color_mapped_splitted_frame, formatted_time, self.recording, self.lockInPorcentage,  self.lockin_running, self.maxValuePixel, self.minValuePixel,colorscale
     
+    def create_color_scale(self,min, max, width=25, height=250):
+        # Crear una imagen de gradiente vertical (de mínimo a máximo)
+        gradient = np.linspace(min, max, int(height * 0.9), dtype=np.uint8).reshape(int((height * 0.9)), 1)
+        gradient = np.tile(gradient, (1, int(width / 3)))  # Expandir a lo ancho
+        # Aplicar el mapa de colores seleccionado
+        color_map = self.frameProcessor.setColorMap(gradient)
+        return color_map
+
     def elapsed_time (self):
         # Calcular el tiempo transcurrido y formatearlo como hh:mm:ss
         elapsed_time = time.time() - self.recordingstart_time

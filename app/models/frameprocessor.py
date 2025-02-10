@@ -6,9 +6,9 @@ class FrameProcessor:
 
     colorMapDict = {
         "JET": cv2.COLORMAP_JET,
-        "HOT": cv2.COLORMAP_HOT,
-        "COOL": cv2.COLORMAP_COOL,
-        "PLASMA": cv2.COLORMAP_PLASMA,
+        "HOT": cv2.COLORMAP_WINTER,
+        "COOL": cv2.COLORMAP_PLASMA,
+        "PLASMA": cv2.COLORMAP_COOL,
         "TURBO": cv2.COLORMAP_TURBO
             }
 
@@ -27,12 +27,12 @@ class FrameProcessor:
             color_mapped_frame = frame    
         else:
             color_map = self.colorMapDict.get(self.colorMapVar)
-            color_mapped_frame = cv2.applyColorMap(frame, color_map)
+            color_mapped_frame = cv2.applyColorMap(frame, color_map) 
           
         return color_mapped_frame
     
     def setFrameSection (self, frame, frameSectionVar):
-        if frameSectionVar == "BUTTOM":
+        if frameSectionVar == "BOTTOM":
             # Get the bottom half of the image
             height, width = frame.shape[:2]
             frame = frame[height // 2:, :]  #separates the bottom half of the image
@@ -85,22 +85,23 @@ class FrameProcessor:
 
         return Decoded_image.astype(np.float64)
     
-    def Get_Maximum (self, frame):
-        maxPixel = Pixel()
-        maxTemp = np.max(frame)
-        maxPixel.Position = np.where(frame == maxTemp)
-        Temp = frame[maxPixel.Position[0],maxPixel.Position[1],1]
-        maxPixel.Value = np.float64((int(Temp) << 8) | maxTemp)
-        return maxPixel
-    
-    def Get_Minimum (self, frame):
-        minPixel = Pixel()
-        minTemp = np.min(frame)
-        minPixel.Position = np.where(frame == minTemp) 
-        Temp = frame[minPixel.Position[0],minPixel.Position[1],1]
-        minPixel.Value = np.float64((int(Temp) << 8) | minTemp)
-        return minPixel
+    def pixel_decoder(self,pixel):
+        return np.float64((int(pixel[1]) << 8) | pixel[0])
 
+    def Get_MaxMin (self, grayFrame, frame):
+        maxPixel = Pixel()
+        minPixel = Pixel()
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(grayFrame)
+        maxPixel.eightbitsvalue = max_val
+        minPixel.eightbitsvalue = min_val
+        maxPixel.Position = max_loc
+        minPixel.Position = min_loc
+
+        minPixel.Value = self.pixel_decoder(frame[minPixel.Position[1],minPixel.Position[0]])
+        maxPixel.Value = self.pixel_decoder(frame[maxPixel.Position[1],maxPixel.Position[0]])
+
+        return minPixel, maxPixel
+    
     def yuv2gray_yuyv (self, frame):
         return cv2.cvtColor(frame, cv2.COLOR_YUV2GRAY_YUYV)
     

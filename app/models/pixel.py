@@ -7,8 +7,10 @@ class Pixel ():
 
     def __init__(self):
         self.__value = 0
+        self.eightbitsvalue = 0
         self.__x = 0
         self.__y = 0
+
     
     @property
     def Value(self):
@@ -28,8 +30,8 @@ class Pixel ():
     
     @Position.setter
     def Position(self,axis):
-        self.__x = axis[0][0]        
-        self.__y = axis[1][0]
+        self.__x = axis[0]       
+        self.__y = axis[1]
     
     @Value.setter
     def Value(self, value):

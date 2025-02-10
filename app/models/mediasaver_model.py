@@ -62,34 +62,3 @@ class ImageSaver:
         print(save_path_str)
           
         cv2.imwrite(save_path_str , self.frame) 
-                    
-'''if __name__ == "__main__":
-    cap = cv2.VideoCapture(0)
-    
-    if not cap.isOpened():
-        print("Error: No se pudo abrir la cámara")
-        exit()
-
-    frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-    video_saver = VideoSaver(save_dir='videos', video_name='mi_video', frame_width=frame_width, frame_height=frame_height, fps=30)
-    video_saver.start_saving()
-
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            print("Error: No se pudo leer el frame de la cámara")
-            break
-
-        cv2.imshow('Frame', frame)
-
-        video_saver.save_frame(frame)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    cap.release()
-    video_saver.stop_saving()
-    cv2.destroyAllWindows()'''
-

@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+import numpy as np
 from app.utils.style import Style
 from PIL import Image, ImageTk
 from tkinter import messagebox
@@ -118,11 +119,27 @@ class MainWindow:
         self.menu.add_command(image=self.turboicon, command=lambda:self.change_colorMap("TURBO", self.turboicon))
         self.menu.add_command(image=self.jeticon, command=lambda:self.change_colorMap("JET", self.jeticon))
 
-         # Crear los tres marcos de video
+        # Configurar las filas del grid en el Frame camera
+        self.cameraFrame.grid_rowconfigure(0, weight=1)  # Fila Superior
+        self.cameraFrame.grid_columnconfigure(0, weight=10)  # Fila Media
+        self.cameraFrame.grid_columnconfigure(1, weight=1)
+
+        self.videoFrame = ttk.Frame(self.cameraFrame,style="Modern.TFrame")
+        self.colorscaleFrame = ttk.Frame(self.cameraFrame,style="Modern.TFrame")
+
+        # Colocando los los subframes dentro del frame camera
+        self.videoFrame.grid(row=0, column=0, sticky="nsew")
+        self.colorscaleFrame.grid(row=0, column=1, sticky="nsew")
+
+        # Canvas para la escala de colores
+        self.canvas_color = tk.Canvas(self.colorscaleFrame)
+        self.canvas_color.place(relx=0, rely=0, relwidth=1, relheight=1)  # video principal
+
+        # Crear los tres marcos de video
         self.frames = [
-            ttk.Frame(self.cameraFrame,style="Modern.TFrame"),
-            ttk.Frame(self.cameraFrame,style="Modern.TFrame"),
-            ttk.Frame(self.cameraFrame,style="Modern.TFrame")
+            ttk.Frame(self.videoFrame,style="Modern.TFrame"),
+            ttk.Frame(self.videoFrame,style="Modern.TFrame"),
+            ttk.Frame(self.videoFrame,style="Modern.TFrame")
         ]
 
         #Posiciona el frame del video principal
@@ -273,11 +290,11 @@ class MainWindow:
         self.liveButton = tk.Button(self.LiveFrame, image=self.liveButtonIcon, borderwidth=0, background="#FFFFFF", command=self.on_toLive)
 
         self.set_defautLockinparameters()
-
         self.update_frame() 
 
+
     def update_frame(self):
-        ret,frame,elapsedtime,self.time_visible, self.lockinporcentage, lockinrunning, maxValuePixel, minValuePixel = self.controller.update_frame()
+        ret,self.frame,elapsedtime,self.time_visible, self.lockinporcentage, lockinrunning, maxValuePixel, minValuePixel, colorscale = self.controller.update_frame()
         if ret == True:
             if self.lockinrunning and self.controller.is_lockin_done():
                 self.update_lockininformation(self.lockinporcentage)
@@ -289,8 +306,10 @@ class MainWindow:
                     self.update_lockinsection()
             else:
                 self.realtimevideoCanvas.delete("all")
-                self.update_Thermogram(frame,self.realtimevideoCanvas)
+                self.update_Thermogram(self.frame,self.realtimevideoCanvas)
                 self.update_MaxMinTemp(self.realtimevideoCanvas, maxValuePixel, minValuePixel)
+                colorscale = self.controller.create_color_scale(minValuePixel.eightbitsvalue, maxValuePixel.eightbitsvalue, self.canvas_color.winfo_width(), self.canvas_color.winfo_height())
+                self.create_color_scale(self.canvas_color, minValuePixel.Value, maxValuePixel.Value, colorscale, self.canvas_color.winfo_width(), self.canvas_color.winfo_height())
                 
             if self.time_visible == True:
                 # Actualizar el tiempo en el canvas
@@ -301,11 +320,37 @@ class MainWindow:
                 self.set_notification("Imagen Capturada")
 
         self.realtimevideoCanvas.after(10,self.update_frame)
-        
-    def resize_image(self, img, parentFrame):
-         # Redimensionar la imagen al tamaño del Label
-        label_width = parentFrame.winfo_width()
-        label_height = parentFrame.winfo_height()
+
+    def create_color_scale(self, canvas, min_temp, max_temp, colorscale, width=25, height=250):
+        """ Dibuja una escala de colores en el Canvas con etiquetas de valores mínimo y máximo """
+        canvas.delete("all")  # Limpiar canvas antes de redibujar
+        # Convertir a imagen compatible con Tkinter
+        img = ImageTk.PhotoImage(image=Image.fromarray(colorscale))
+        canvas.create_image(0, height * 0.05, anchor="nw", image=img)
+        canvas.image = img  # Mantener referencia para evitar que se borre
+        self.draw_scale(canvas, width/3, height * 0.90, width/3,height*0.05)
+        # Dibujar SOLO valores mínimo y máximo
+        canvas.create_text((width /2) + 3, height * 0.05, text=str(int(max_temp)) + "ºC", fill="black", anchor="w")
+        canvas.create_text((width /2) + 3, height * 0.275, text=str(int((max_temp - min_temp) * 0.75 + min_temp)) + "ºC", fill="black", anchor="w")
+        canvas.create_text((width /2) + 3, height * 0.50, text=str(int((max_temp - min_temp) * 0.50 + min_temp)) + "ºC", fill="black", anchor="w")
+        canvas.create_text((width /2) + 3, height * 0.725, text=str(int((max_temp - min_temp) * 0.25 + min_temp)) + "ºC", fill="black", anchor="w")
+        canvas.create_text((width /2) + 3, height * 0.95, text=str(int(min_temp)) +"ºC", fill="black", anchor="w")
+
+
+    def draw_scale(self, canvas, width, height, xoutset, youtset):
+        num_regions = 4  # Número de regiones principales
+        subdivisions = 5  # Número de subdivisiones dentro de cada región
+        total_divisions = num_regions * subdivisions  # Número total de líneas
+        step = height / total_divisions  # Espaciado entre líneas
+        for i in range(total_divisions + 1):
+            y = i * step
+            # Aseguramos que la primera línea grande se dibuje en la parte superior (y=0)
+            if i == 0 or i % subdivisions == 0 or i == total_divisions:  # Línea grande en el primer y último punto
+                canvas.create_line(xoutset, youtset + y, xoutset + width * 0.6, youtset + y, fill="black", width=2)
+            else:  # Línea pequeña dentro de cada región
+                canvas.create_line(xoutset, youtset + y, xoutset + width * 0.3, youtset + y, fill="gray", width=1)
+                
+    def resize_image(self, img, label_width, label_height):
         if label_width > 0 and label_height > 0:  # Evitar redimensionar a 0x0
             img = img.resize((label_width, label_height), Image.Resampling.LANCZOS)
         return img
@@ -495,7 +540,7 @@ class MainWindow:
 
     def update_Thermogram(self, frame, canvas):
         img = Image.fromarray(frame)
-        img = self.resize_image(img, canvas)
+        img = img.resize((canvas.winfo_width(), canvas.winfo_height()), Image.Resampling.LANCZOS)
         img = ImageTk.PhotoImage(image = img)       
          # Dibujar el video en el realtimevideoCanvas
         canvas.create_image(0, 0, anchor=tk.NW, image=img)
@@ -554,18 +599,25 @@ class MainWindow:
     def update_MaxMinTemp(self,canvas, maxpixel, minpixel):
         x_min, y_min = map(int, minpixel.Position)  
         x_max, y_max = map(int, maxpixel.Position)
-                
+        
+        # Relación de escalado entre la imagen original y la ventana de visualización
+        scale_x = self.realtimevideoCanvas.winfo_width() / self.frame.shape[1]
+        scale_y = self.realtimevideoCanvas.winfo_height() / self.frame.shape[0]
+        # Escalar las coordenadas del punto mínimo y máximo
+        min_loc_scaled = (int(x_min * scale_x), int(y_min * scale_y))
+        max_loc_scaled = (int(x_max * scale_x), int(y_max * scale_y))
+
         # Dibujar círculos en los puntos mínimo y máximo
-        canvas.create_oval(x_min - 5, y_min - 5, 
-        x_min + 5, y_min + 5, 
+        canvas.create_oval(min_loc_scaled[0] - 5, min_loc_scaled[1] - 5, 
+        min_loc_scaled[0] + 5, min_loc_scaled[1]  + 5, 
         fill="blue", outline="blue")
 
-        canvas.create_oval(x_max - 5, y_max - 5, 
-        x_max + 5, y_max + 5, 
+        canvas.create_oval(max_loc_scaled[0] - 5, max_loc_scaled[1] - 5, 
+        max_loc_scaled[0] + 5, max_loc_scaled[1] + 5, 
         fill="red", outline="red")
                 
-        canvas.create_text(x_min + 25, y_min, text=str(round(minpixel.Value, 2)), fill="blue")
-        canvas.create_text(x_max + 25, y_max, text=str(round(maxpixel.Value, 2)), fill="red")
+        canvas.create_text(min_loc_scaled[0] + 30, min_loc_scaled[1], text=str(round(minpixel.Value, 2))+" ºC", fill="blue")
+        canvas.create_text(max_loc_scaled[0]+ 30, max_loc_scaled[1], text=str(round(maxpixel.Value, 2))+" ºC", fill="red")
 
 
 
