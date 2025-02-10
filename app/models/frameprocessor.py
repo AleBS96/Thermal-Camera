@@ -6,9 +6,9 @@ class FrameProcessor:
 
     colorMapDict = {
         "JET": cv2.COLORMAP_JET,
-        "HOT": cv2.COLORMAP_WINTER,
-        "COOL": cv2.COLORMAP_PLASMA,
-        "PLASMA": cv2.COLORMAP_COOL,
+        "HOT": cv2.COLORMAP_HOT,
+        "COOL": cv2.COLORMAP_COOL,
+        "PLASMA": cv2.COLORMAP_PLASMA,
         "TURBO": cv2.COLORMAP_TURBO
             }
 

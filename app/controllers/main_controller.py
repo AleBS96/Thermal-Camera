@@ -110,15 +110,18 @@ class MainController:
             if self.recording:
                 #Calcula el tiempo transcurrido
                 formatted_time = self.elapsed_time()
+            
+            self.color_mapped_splitted_frame = cv2.cvtColor(self.color_mapped_splitted_frame, cv2.COLOR_BGR2RGB)
 
         return self.ret, self.color_mapped_splitted_frame, formatted_time, self.recording, self.lockInPorcentage,  self.lockin_running, self.maxValuePixel, self.minValuePixel,colorscale
     
     def create_color_scale(self,min, max, width=25, height=250):
         # Crear una imagen de gradiente vertical (de mínimo a máximo)
-        gradient = np.linspace(min, max, int(height * 0.9), dtype=np.uint8).reshape(int((height * 0.9)), 1)
+        gradient = np.linspace(max, min, int(height * 0.9), dtype=np.uint8).reshape(int((height * 0.9)), 1)
         gradient = np.tile(gradient, (1, int(width / 3)))  # Expandir a lo ancho
         # Aplicar el mapa de colores seleccionado
         color_map = self.frameProcessor.setColorMap(gradient)
+        color_map = cv2.cvtColor(color_map, cv2.COLOR_BGR2RGB)
         return color_map
 
     def elapsed_time (self):
