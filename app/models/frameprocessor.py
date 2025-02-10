@@ -45,7 +45,7 @@ class FrameProcessor:
         
         return frame
 
-    def frame_decoder(self,imagen):
+    def frame_decoder(self,image):
         """summary for frame_decoder
         The function receives  an image in YUYV format distributed in 2 
         arrays.One with the Y luminances and others with the UV chromances 
@@ -57,10 +57,13 @@ class FrameProcessor:
         Returns:
             [type]: [Processed image]
         """
-            
+        # Get the bottom half of the image
+        height, width = image.shape[:2]
+        secc_image = image[height // 2:, :]  #separates the bottom half of the image
+
         # Separar los canales Y, Cb y Cr
-        Y = imagen[:, :, 0]   # Luminancia
-        Cb1 = imagen[:, :, 1] # Crominancia azul
+        Y = secc_image[:, :, 0]   # Luminancia
+        Cb1 = secc_image[:, :, 1] # Crominancia azul
 
         # Obtener dimensiones de Y
         height, width = Y.shape

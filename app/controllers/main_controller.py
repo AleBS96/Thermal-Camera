@@ -99,8 +99,9 @@ class MainController:
                 self.bottom_splitted_frame = self.frameProcessor.setFrameSection(self.Frame, "BOTTOM")
                 self.top_splitted_frame_gray = self.frameProcessor.yuv2gray_yuyv(self.top_splitted_frame) 
                 self.color_mapped_splitted_frame = self.frameProcessor.setColorMap(self.top_splitted_frame_gray)
-                elapsed_time = time.time() - self.start_time
-               
+                self.color_mapped_splitted_frame = cv2.cvtColor(self.color_mapped_splitted_frame, cv2.COLOR_BGR2RGB)
+
+                elapsed_time = time.time() - self.start_time 
                 if (elapsed_time > 1):
                     self.minValuePixel, self.maxValuePixel = self.frameProcessor.Get_MaxMin(self.top_splitted_frame_gray, self.bottom_splitted_frame)
                     self.minValuePixel = pixel_to_temperature(self.minValuePixel)
@@ -111,8 +112,6 @@ class MainController:
                 #Calcula el tiempo transcurrido
                 formatted_time = self.elapsed_time()
             
-            self.color_mapped_splitted_frame = cv2.cvtColor(self.color_mapped_splitted_frame, cv2.COLOR_BGR2RGB)
-
         return self.ret, self.color_mapped_splitted_frame, formatted_time, self.recording, self.lockInPorcentage,  self.lockin_running, self.maxValuePixel, self.minValuePixel,colorscale
     
     def create_color_scale(self,min, max, width=25, height=250):
@@ -265,9 +264,8 @@ class MainController:
                    else:
                         if self.recording:
                             self.videoframes.append(self.Frame)
-
+                        
                         self.ret = ret 
-
                         if self.ret and self.lockin_running and self.capturedFrameslockin <= self.lockIn.get_FinalFrame():
                             self.FrameBuffer = self.Frame
                             self.capturedFrameslockin += 1

@@ -155,9 +155,6 @@ class MainWindow:
         self.amplitudeCanvas.place(relx=0, rely=0, relwidth=1, relheight=1)  # video amplitud
         self.phaseCanvas.place(relx=0, rely=0, relwidth=1, relheight=1)  # video fase
 
-        # Crear un texto para mostrar el tiempo y notificacion de capturade imagen
-        self.notification = self.realtimevideoCanvas.create_text(30, 10, anchor=tk.NW, text='', fill="black", font=("Helvetica", 24))
-
         # Configurar las filas del grid en el Frame toolFrames
         self.toolsFrame.grid_rowconfigure(0, weight=80)  # Fila Superior
         self.toolsFrame.grid_rowconfigure(1, weight=1)  # Fila inferior
@@ -294,7 +291,7 @@ class MainWindow:
 
 
     def update_frame(self):
-        ret,self.frame,elapsedtime,self.time_visible, self.lockinporcentage, lockinrunning, maxValuePixel, minValuePixel, colorscale = self.controller.update_frame()
+        ret,self.frame,self.elapsedtime,self.time_visible, self.lockinporcentage, lockinrunning, maxValuePixel, minValuePixel, colorscale = self.controller.update_frame()
         if ret == True:
             if self.lockinrunning and self.controller.is_lockin_done():
                 self.update_lockininformation(self.lockinporcentage)
@@ -304,21 +301,18 @@ class MainWindow:
                 if self.lockinporcentage >= 100:
                     self.lockinrunning = False
                     self.update_lockinsection()
-            else:
+            elif(not self.lockinrunning):
                 self.realtimevideoCanvas.delete("all")
                 self.update_Thermogram(self.frame,self.realtimevideoCanvas)
                 self.update_MaxMinTemp(self.realtimevideoCanvas, maxValuePixel, minValuePixel)
                 colorscale = self.controller.create_color_scale(minValuePixel.eightbitsvalue, maxValuePixel.eightbitsvalue, self.canvas_color.winfo_width(), self.canvas_color.winfo_height())
                 self.create_color_scale(self.canvas_color, minValuePixel.Value, maxValuePixel.Value, colorscale, self.canvas_color.winfo_width(), self.canvas_color.winfo_height())
-                
-            if self.time_visible == True:
-                # Actualizar el tiempo en el canvas
-                self.realtimevideoCanvas.itemconfigure(self.notification, text=elapsedtime)
-                self.realtimevideoCanvas.tag_raise(self.notification)
-            
-            if self.counttime < 10:
-                self.set_notification("Imagen Capturada")
-
+                if self.counttime < 10:
+                    self.set_notification("Imagen Capturada")
+                if self.time_visible == True:
+                    # Actualizar el tiempo en el canvas
+                    self.notification = self.realtimevideoCanvas.create_text(30, 10, anchor=tk.NW, text=self.elapsedtime, fill="#5A6FAF", font=("Helvetica", 24))
+                    self.realtimevideoCanvas.tag_raise(self.notification)
         self.realtimevideoCanvas.after(10,self.update_frame)
 
     def create_color_scale(self, canvas, min_temp, max_temp, colorscale, width=25, height=250):
@@ -442,13 +436,14 @@ class MainWindow:
         self.controller.change_colorMapVar(color_map)
 
     def load_file(self):
-        self.controller.load_file(FilePathManager.select_file_to_open(".", ".mat"))
+        self.controller.load_file(FilePathManager.select_file_to_open(".", ".thrm"))
         self.liveButton.place(relx=0.70, rely=0, relwidth=0.25, relheight=1)
 
     def set_notification(self, text):
         self.counttime += 1
         if (self.counttime < 200):
-            self.realtimevideoCanvas.itemconfigure(self.notification, text=text)
+            # Crear un texto para mostrar el tiempo y notificacion de capturade imagen
+            self.notification = self.realtimevideoCanvas.create_text(self.realtimevideoCanvas.winfo_height() * 0.75, 10, anchor=tk.NW, text=text, fill="#5A6FAF", font=("Helvetica", 24))
             self.realtimevideoCanvas.tag_raise(self.notification)
 
     #Sets the default parameters for Lockin processing
@@ -545,6 +540,7 @@ class MainWindow:
          # Dibujar el video en el realtimevideoCanvas
         canvas.create_image(0, 0, anchor=tk.NW, image=img)
         canvas.img = img 
+
     
     #VALIDACIONES DE ENTRADA DE PARAMETROS
     def validate_input(self,text):
@@ -595,6 +591,10 @@ class MainWindow:
         for child_frame in self.optionsFrame.winfo_children():
             for widget in child_frame.winfo_children():
                 widget.configure(state=currentState)
+        
+        for widget in self.LiveFrame.winfo_children():
+            widget.configure(state=currentState)
+        
         
     def update_MaxMinTemp(self,canvas, maxpixel, minpixel):
         x_min, y_min = map(int, minpixel.Position)  
