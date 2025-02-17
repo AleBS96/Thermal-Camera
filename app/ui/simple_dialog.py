@@ -1,47 +1,69 @@
 import tkinter as tk
-from tkinter import simpledialog
+from tkinter import ttk
+from app.utils.style import Style
 
-class TextDialog(simpledialog.Dialog):
-    def __init__(self, parent, title):
-        '''self.keyboard = keyboard'''
-        super().__init__(parent, title=title)
-        self.body(parent)
+class CustomDialog:
+    def __init__(self, parent, title, prompt, keyboard):
+        self.parent = parent
+        self.title = title
+        self.prompt = prompt
+        self.keyboard = keyboard
+        self.result = None
 
-    def body(self, master):
-        """Construye el diálogo con un campo de texto"""
-        tk.Label(master, text="Ingrese texto:").pack(pady=10)
-        self.text_input = tk.Entry(master, font=("Arial", 14))
-        self.text_input.pack(pady=10, fill=tk.X)
-        
-        '''# Mostrar el teclado cuando se abre el diálogo
-        self.keyboard.show()
+    def show(self):
+        # Crear una ventana de diálogo
+        self.dialog = tk.Toplevel(self.parent)
+        self.dialog.title(self.title)
 
-        # Detectar clics en cualquier parte de la ventana
-        self.bind("<Button-1>", self.click_handler)'''
-        
-        return self.text_input  # Enfocar el campo de texto
+        # Asociar el diálogo con la ventana principal (sin bloquearla)
+        self.dialog.transient(self.parent)
 
-    '''def click_handler(self, event):
-        """Maneja los clics dentro y fuera del campo de texto y el teclado"""
-        widget = event.widget
+        # Centrar el diálogo en la pantalla
+        self.center_dialog()
 
-        # Verificar si el clic fue en el campo de texto
-        if widget == self.text_input:
-            self.keyboard.show()
-        # Verificar si el clic no fue en el teclado
-        elif not self.is_click_on_keyboard(widget):
-            self.keyboard.hide()
+        # Etiqueta con el mensaje
+        label = ttk.Label(self.dialog, text=self.prompt, style="ModernDialog.TLabel")
+        label.pack(padx= 10, pady=10)
 
-    def is_click_on_keyboard(self, widget):
-        """Verifica si el clic fue en el teclado virtual"""
-        # Recorrer el árbol de widgets hasta la raíz para verificar si pertenece al teclado
-        while widget:
-            if widget == self.keyboard.keyboard_frame:
-                return True
-            widget = widget.master
-        return False'''
+        # Campo de entrada
+        self.entry = ttk.Entry(self.dialog, width=40, style="Modern.TEntry")
+        self.entry.pack(pady=10)
 
-    def apply(self):
-        """Toma el valor del campo de texto"""
-        self.result = self.text_input.get()
-        '''self.keyboard.hide()  # Ocultar el teclado cuando el diálogo se cierre'''
+        # Botón de aceptar
+        def on_accept():
+            self.result = self.entry.get()
+            self.dialog.destroy()
+
+        accept_button = ttk.Button(self.dialog, text="Aceptar", command=on_accept, style="Modern.TButton")
+        accept_button.pack(pady=10)
+
+        # Mostrar el teclado virtual cuando se haga clic en el Entry
+        def on_entry_click(event):
+            self.keyboard.show(self.entry)
+
+        self.entry.bind("<Button-1>", on_entry_click)
+
+        # Esperar a que el diálogo se cierre
+        self.dialog.wait_window()
+
+        # Devolver el valor ingresado
+        return self.result
+    
+    def center_dialog(self):
+        # Actualizar la ventana para asegurarse de que se conozcan sus dimensiones
+        self.dialog.update_idletasks()
+
+        # Obtener las dimensiones de la pantalla
+        screen_width = self.parent.winfo_width()
+        screen_height = self.parent.winfo_height()
+
+        # Obtener las dimensiones de la ventana del diálogo
+        dialog_width = self.dialog.winfo_reqwidth()
+        dialog_height = self.dialog.winfo_reqheight()
+
+        # Calcular la posición para centrar la ventana
+        x = (screen_width // 2) - (dialog_width // 2)
+        y = (screen_height // 2) - (dialog_height // 2)
+
+        # Establecer la posición de la ventana
+        self.dialog.geometry(f"+{x}+{y}")

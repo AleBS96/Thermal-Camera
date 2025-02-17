@@ -6,7 +6,7 @@ import os
 from tkinter import Tk, filedialog
 
 class FilePathManager:
-    def __init__(self, default_dir='.', default_filename='archivo', extension='.avi'):
+    def __init__(self, default_dir='.', default_filename='archivo', extension='.mat'):
         """
         Clase que gestiona la selección de rutas para abrir y guardar archivos.
 
@@ -23,9 +23,6 @@ class FilePathManager:
         Abre un cuadro de diálogo para que el usuario seleccione la ruta y nombre del archivo a guardar.
         :return: Ruta completa del archivo seleccionado por el usuario para guardar.
         """
-        root = Tk()
-        root.withdraw()  # Ocultar la ventana principal de tkinter
-
         # Cuadro de diálogo para guardar archivo
         file_path = filedialog.asksaveasfilename(
             initialdir=self.default_dir,
@@ -35,25 +32,20 @@ class FilePathManager:
         )
         directory, file_name = os.path.split(file_path)
         name = os.path.splitext(os.path.basename(file_name))[0]
-        root.destroy()
         return directory, name
 
-    def select_file_to_open(self):
+    @staticmethod
+    def select_file_to_open(default_dir, extension):
         """
         Abre un cuadro de diálogo para que el usuario seleccione un archivo para abrir.
         :return: Ruta completa del archivo seleccionado por el usuario para abrir.
         """
-        root = Tk()
-        root.withdraw()  # Ocultar la ventana principal de tkinter
-
         # Cuadro de diálogo para abrir archivo
         file_path = filedialog.askopenfilename(
-            initialdir=self.default_dir,
-            filetypes=[("Archivos", f"*{self.extension}"), ("Todos los archivos", "*.*")]
+            initialdir=default_dir,
+            filetypes=[("Archivos", f"*{extension}"), ("Todos los archivos", "*.*")]
         )
-
-        root.destroy()
-        return 
+        return file_path
 
 
 
@@ -70,13 +62,13 @@ class FilePathManager:
 #        print("No se seleccionó ninguna ruta para guardar.")
 
 #PRUEBA ABRIR ARCHIVO
-#if __name__ == "__main__":
-#    path_manager = FilePathManager(default_dir='C:/', extension='.avi')
+if __name__ == "__main__":
+    path_manager = FilePathManager(default_dir='C:/', extension='.avi')
 
-#    # Seleccionar la ruta para abrir un archivo
-#    open_path = path_manager.select_file_to_open()
+    # Seleccionar la ruta para abrir un archivo
+    open_path = path_manager.select_file_to_open()
 
-#    if open_path:
-#        print(f"El archivo seleccionado para abrir es: {open_path}")
-#    else:
-#        print("No se seleccionó ningún archivo.")
+    if open_path:
+        print(f"El archivo seleccionado para abrir es: {open_path}")
+    else:
+        print("No se seleccionó ningún archivo.")
