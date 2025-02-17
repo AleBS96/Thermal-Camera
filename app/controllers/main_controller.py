@@ -3,7 +3,7 @@ import os
 import datetime
 import numpy as np
 from pathlib import Path
-from tkinter import simpledialog, messagebox
+from tkinter import messagebox
 import time
 import threading
 from collections import deque
@@ -150,9 +150,8 @@ class MainController:
 
         self.recording = True
 
-    def stop_recording (self):
+    def stop_recording (self, file_name):
         self.recording = False
-        file_name = simpledialog.askstring("Nombre del archivo", "Introduce el nombre del video:")    
         if file_name:
             ExportData.export_as_mat({"video_frames": self.videoframes}, file_name ,"./captures/videos")
             

@@ -7,7 +7,7 @@ class Style:
         # Estilo general para botones
         self.style.configure(
             "Modern.TButton",
-            font=("Helvetica", 14, "bold"),
+            font=("Helvetica", 14),
             relief="flat", 
             anchor="nsew",
             borderwidth=0,
@@ -19,7 +19,7 @@ class Style:
         )
         self.style.map(
             "Modern.TButton",
-            background=[("active", "#45A049")],  # Color más oscuro al pulsar
+            background=[("active", "#005091")],  # Color más oscuro al pulsar
         )
 
          # Estilo general para menuButton
@@ -33,7 +33,7 @@ class Style:
         )
         self.style.map(
             "ModernMenu.TButton",
-            background=[("active", "#45A049")],  # Color más oscuro al pulsar
+            background=[("active", "#005091")],  # Color más oscuro al pulsar
         )
 
         # Estilo general para labels
@@ -48,6 +48,12 @@ class Style:
             "ModernPercent.TLabel",
             font=("Helvetica", 10),
             background="#FFFFFF"
+        )
+        
+        # Estilo general para label de porciento
+        self.style.configure(
+            "ModernDialog.TLabel",
+            font=("Helvetica", 14)
         )
 
         # Estilo general para frames

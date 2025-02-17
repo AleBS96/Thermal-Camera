@@ -5,6 +5,8 @@ from app.utils.style import Style
 from PIL import Image, ImageTk
 from tkinter import messagebox
 from app.models.filepath_model import FilePathManager
+from app.ui.virtual_keyboard import VirtualKeyboard
+from app.ui.simple_dialog import CustomDialog
 
 class MainWindow:
     def __init__(self, controller):
@@ -18,7 +20,7 @@ class MainWindow:
         self.root = tk.Tk()
         self.root.title("Interfaz Táctil - Cámara Térmica")
         self.validate = self.root.register(self.validate_input)
-        self.root.attributes("-fullscreen", True)
+       # self.root.attributes("-fullscreen", True)
         self.counttime = 1000
         # Vincular el evento de cierre de la ventana al método de cierre
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -48,7 +50,7 @@ class MainWindow:
         self.turboicon = self.load_icon("app/assets/color_map/turbo.png",self.colormapIcon_height,self.colormapIcon_width)  
         self.graysicon = self.load_icon("app/assets/color_map/gray.png",self.colormapIcon_height,self.colormapIcon_width)  
         self.jeticon = self.load_icon("app/assets/color_map/jet.png",self.colormapIcon_height,self.colormapIcon_width)
-       
+
     
         # Crear marco principal
         self.mainFrame = ttk.Frame(self.root)
@@ -155,6 +157,9 @@ class MainWindow:
         self.amplitudeCanvas.place(relx=0, rely=0, relwidth=1, relheight=1)  # video amplitud
         self.phaseCanvas.place(relx=0, rely=0, relwidth=1, relheight=1)  # video fase
 
+        # Crear el teclado virtual
+        self.keyboard = VirtualKeyboard(self.videoFrame)
+
         # Configurar las filas del grid en el Frame toolFrames
         self.toolsFrame.grid_rowconfigure(0, weight=80)  # Fila Superior
         self.toolsFrame.grid_rowconfigure(1, weight=1)  # Fila inferior
@@ -210,6 +215,8 @@ class MainWindow:
         self.frEntry_var.trace_add("write", self.on_frEntry_change)                         # Asociar la variable con el Entry y añadir el trace
         self.frLabel = ttk.Label(self.frFrame,style="Modern.TLabel",justify="right", text="FPS")
         self.frEntry = ttk.Entry(self.frFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.frEntry_var, justify="right",style="Modern.TEntry")
+        self.frEntry.bind("<Button-1>", self.on_entry_click)  # Mostrar teclado al hacer clic
+        self.frEntry.bind("<FocusOut>", self.on_focus_out)    # Ocultar teclado al perder el foco
         self.frLabel.place(relx=0.1, rely=0, relwidth=1, relheight=0.5)
         self.frEntry.place(relx=0.1, rely=0.5, relwidth=0.8, relheight=0.5)
 
@@ -218,6 +225,8 @@ class MainWindow:
         self.modEntry_var.trace_add("write", self.on_modEntry_change)                        # Asociar la variable con el Entry y añadir el trace
         self.modLabel = ttk.Label(self.modFrame,style="Modern.TLabel",justify="center", text="F. Mod (Hz)")
         self.modEntry = ttk.Entry(self.modFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.modEntry_var, justify="right",style="Modern.TEntry")
+        self.modEntry.bind("<Button-1>", self.on_entry_click)  # Mostrar teclado al hacer clic
+        self.modEntry.bind("<FocusOut>", self.on_focus_out)    # Ocultar teclado al perder el foco
         self.modLabel.place(relx=0.1, rely=0, relwidth=1, relheight=0.5)
         self.modEntry.place(relx=0.1, rely=0.5, relwidth=0.8, relheight=0.5)
 
@@ -226,6 +235,7 @@ class MainWindow:
         self.initLabel = ttk.Label(self.initFrame,style="Modern.TLabel",justify="center", text="F. Inicial")
         self.initEntry = ttk.Entry(self.initFrame, validate="key", validatecommand=(self.validate, "%P"), textvariable=self.initEntry_var,font=("Arial",10), justify="right",style="Modern.TEntry", state="disabled")
         self.initEntry.bind("<FocusOut>", self.on_initEntry_change)
+        self.initEntry.bind("<Button-1>", self.on_entry_click)  # Mostrar teclado al hacer clic
         self.initEntry.bind("<Return>", self.on_initEntry_change)
         self.initLabel.place(relx=0.1, rely=0, relwidth=1, relheight=0.5)
         self.initEntry.place(relx=0.1, rely=0.5, relwidth=0.8, relheight=0.5)
@@ -242,6 +252,7 @@ class MainWindow:
             style="Modern.TEntry"
             )
         self.finEntry.bind("<FocusOut>", self.on_finEntry_change)
+        self.finEntry.bind("<Button-1>", self.on_entry_click)  # Mostrar teclado al hacer clic
         self.finEntry.bind("<Return>", self.on_finEntry_change)
         self.finLabel.place(relx=0.1, rely=0, relwidth=1, relheight=0.5)
         self.finEntry.place(relx=0.1, rely=0.5, relwidth=0.8, relheight=0.5)
@@ -359,7 +370,10 @@ class MainWindow:
             # Detiene la grabación y solicita el nombre del archivo
             self.recording = False
             self.recordButton.config(image=self.recordButtonIcon)
-            self.controller.stop_recording()
+            file_name = self.open_dialog()
+            self.keyboard.hide()
+            self.controller.stop_recording(file_name)
+
     
     def capture_image(self):
         ##IMPLEMENTAR NOTIFICACION AL USUARIO DE CAPRUTA DE PANTALLA##
@@ -476,6 +490,17 @@ class MainWindow:
         else:
             self.controller.on_finEntry_change(float(self.finEntry_var.get()))
             self.update_lockininformation(self.lockinporcentage)
+            # Ocultar el teclado cuando el Entry pierde el foco
+            self.keyboard.hide()
+
+    def on_entry_click(self,event):
+        # Mostrar el teclado y asignar el Entry que recibió el clic
+        self.keyboard.show(event.widget)
+
+
+    def on_focus_out(self,event):
+        # Ocultar el teclado cuando el Entry pierde el foco
+        self.keyboard.hide()
 
     def on_toLive(self):
         self.liveButton.place_forget()
@@ -541,7 +566,11 @@ class MainWindow:
         canvas.create_image(0, 0, anchor=tk.NW, image=img)
         canvas.img = img 
 
-    
+        # Función para abrir el diálogo personalizado
+    def open_dialog(self):
+        dialog = CustomDialog(self.videoFrame, "Nombre del archivo", "Introduce el nombre del video:", self.keyboard)
+        return dialog.show()
+        
     #VALIDACIONES DE ENTRADA DE PARAMETROS
     def validate_input(self,text):
         """
