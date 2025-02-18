@@ -20,7 +20,7 @@ class MainWindow:
         self.root = tk.Tk()
         self.root.title("Interfaz Táctil - Cámara Térmica")
         self.validate = self.root.register(self.validate_input)
-       # self.root.attributes("-fullscreen", True)
+        self.root.attributes("-fullscreen", True)
         self.counttime = 1000
         # Vincular el evento de cierre de la ventana al método de cierre
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
