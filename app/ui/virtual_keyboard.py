@@ -4,7 +4,8 @@ class VirtualKeyboard:
     def __init__(self, root):
         self.root = root
         self.frame = tk.Frame(root, bg="lightgray")
-        self.frame.pack(padx = 0 ,pady = 30)#(self.root.winfo_height() / 4) * 3)
+        self.frame.place(x=0, rely=1.0, relwidth=1.0, anchor="sw")  # Fijar en la parte inferior
+
 
         # Teclas del teclado en minúsculas
         self.keys_lower = [
@@ -32,7 +33,7 @@ class VirtualKeyboard:
         self.create_buttons()
 
         # Ocultar el teclado inicialmente
-        self.frame.pack_forget()
+        self.frame.place_forget()
 
         # Variable para almacenar el Entry activo
         self.active_entry = None
@@ -72,8 +73,9 @@ class VirtualKeyboard:
 
     def show(self, entry_widget):
         self.active_entry = entry_widget  # Asignar el Entry activo
-        self.frame.pack(side="bottom", padx = 0 , pady= 0)
+        self.frame.place(x=0, rely=1.0, relwidth=1.0, anchor="sw")  # Fijar en la parte inferior
+
 
     def hide(self):
         self.active_entry = None  # Limpiar el Entry activo
-        self.frame.pack_forget()
+        self.frame.place_forget()

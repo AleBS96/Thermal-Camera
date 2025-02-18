@@ -89,7 +89,7 @@ class FrameProcessor:
         return Decoded_image.astype(np.float64)
     
     def pixel_decoder(self,pixel):
-        return np.float64((int(pixel[1]) << 8) | pixel[0])
+        return np.float64((pixel[1] << 8) | pixel[0])
 
     def Get_MaxMin (self, grayFrame, frame):
         maxPixel = Pixel()

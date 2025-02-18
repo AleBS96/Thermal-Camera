@@ -115,6 +115,10 @@ class MainController:
         return self.ret, self.color_mapped_splitted_frame, formatted_time, self.recording, self.lockInPorcentage,  self.lockin_running, self.maxValuePixel, self.minValuePixel,colorscale
     
     def create_color_scale(self,min, max, width=25, height=250):
+        if(height <= 1):
+            height = 250
+        if(width <= 1):
+            width = 25
         # Crear una imagen de gradiente vertical (de mínimo a máximo)
         gradient = np.linspace(max, min, int(height * 0.9), dtype=np.uint8).reshape(int((height * 0.9)), 1)
         gradient = np.tile(gradient, (1, int(width / 3)))  # Expandir a lo ancho
