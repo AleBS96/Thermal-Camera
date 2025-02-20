@@ -20,7 +20,7 @@ class MainWindow:
         self.root = tk.Tk()
         self.root.title("Interfaz Táctil - Cámara Térmica")
         self.validate = self.root.register(self.validate_input)
-        self.root.attributes("-fullscreen", True)
+        #self.root.attributes("-fullscreen", True)
         self.counttime = 1000
         # Vincular el evento de cierre de la ventana al método de cierre
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -163,7 +163,7 @@ class MainWindow:
         # Configurar las filas del grid en el Frame toolFrames
         self.toolsFrame.grid_rowconfigure(0, weight=80)  # Fila Superior
         self.toolsFrame.grid_rowconfigure(1, weight=1)  # Fila inferior
-        self.toolsFrame.grid_rowconfigure(2, weight=70)  # Fila inferior
+        self.toolsFrame.grid_rowconfigure(2, weight=60)  # Fila inferior
         self.toolsFrame.grid_rowconfigure(3, weight=1)  # Fila inferior
         self.toolsFrame.grid_rowconfigure(4, weight=10)  # Fila inferior
         self.toolsFrame.grid_columnconfigure(0, weight=1)
@@ -176,7 +176,7 @@ class MainWindow:
 
         # Colocando los los subframes dentro del frame toolFrams
         self.lockinFrame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
-        self.toolsSeparador.grid(row=1, column=0,padx=10, pady=10, sticky="nsew")
+        self.toolsSeparador.grid(row=1, column=0,padx=10, pady=5, sticky="nsew")
         self.analysisFrame.grid(row=2, column=0, sticky="nsew")
         self.analysisSeparador.grid(row=3, column=0,padx=10, pady=10, sticky="nsew")
         self.LiveFrame.grid(row=4, column=0, sticky="nsew")
@@ -284,7 +284,7 @@ class MainWindow:
         self.porcentageFrame.grid(row=0, column=0, sticky="nsew")
 
         self.porcentageLabel = ttk.Label(self.porcentageFrame,style="ModernPercent.TLabel",justify="center", text="0%")
-        self.porcentageLabel.place(relx=0.1, rely=0.2, relwidth=1)
+        self.porcentageLabel.place(relx=0.1, rely=0.3, relwidth=1)
 
         self.porcentageBar = ttk.Progressbar(
             self.porcentageFrame, 
@@ -293,7 +293,7 @@ class MainWindow:
             mode="determinate",
             style="Modern.Horizontal.TProgressbar"
         )
-        self.porcentageBar.place(relx=0.1, rely=0.6,relheight=0.4, relwidth=0.8)
+        self.porcentageBar.place(relx=0.1, rely=0.7,relheight=0.25, relwidth=0.8)
 
         self.liveButton = tk.Button(self.LiveFrame, image=self.liveButtonIcon, borderwidth=0, background="#FFFFFF", command=self.on_toLive)
 
@@ -404,7 +404,7 @@ class MainWindow:
             self.controller.start_lockin()
         else:
             self.execLockinButton.config(image=self.execLockinButtonIcon)
-            self.resetLockinButton.place(relx=0.27, rely=0.1, relwidth=0.25, relheight=1)
+            self.resetLockinButton.place(relx=0.30, rely=0.1, relwidth=0.25, relheight=1)
             if not self.lockinpause:
                 self.exportDataButton.place(relx=0.65, rely=0.1, relwidth=0.25, relheight=1)
             self.controller.stop_lockin()    
@@ -576,8 +576,7 @@ class MainWindow:
         """
         Validates that the values ​​are numeric and not empty
         """                        
-        #return text.isdigit() and (len(text) <= 7) and int(text) > 0  # Permite solo dígitos o vacío. 
-        return True
+        return (text.replace('.', '', 1).isdigit() or text == "") and (len(text) <= 7) and float(text) >= 0
     
     def validate_values(self):
         """
